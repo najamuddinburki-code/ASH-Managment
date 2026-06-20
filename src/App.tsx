@@ -10,7 +10,7 @@ import AddStudent from './pages/AddStudent';
 import StudentDetail from './pages/StudentDetail';
 import LogPayment from './pages/LogPayment';
 import Months from './pages/Months';
-import Placeholder from './pages/Placeholder';
+import Settings from './pages/Settings';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,7 +38,7 @@ export default function App() {
                 <Route path="/students/:id" element={<StudentDetail />} />
                 <Route path="/pay" element={<LogPayment />} />
                 <Route path="/months" element={<Months />} />
-                <Route path="/settings" element={<Placeholder title="Settings" phase="Phase 7" />} />
+                <Route path="/settings" element={<Settings />} />
               </Route>
             </Route>
 
