@@ -5,6 +5,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Home from './pages/Home';
+import Students from './pages/Students';
+import AddStudent from './pages/AddStudent';
+import StudentDetail from './pages/StudentDetail';
 import Placeholder from './pages/Placeholder';
 
 const queryClient = new QueryClient({
@@ -28,9 +31,9 @@ export default function App() {
             <Route element={<ProtectedRoute />}>
               <Route element={<Layout />}>
                 <Route path="/" element={<Home />} />
-                <Route path="/students" element={<Placeholder title="Students" phase="Phase 4" />} />
-                <Route path="/students/new" element={<Placeholder title="Add Student" phase="Phase 4" />} />
-                <Route path="/students/:id" element={<Placeholder title="Student" phase="Phase 4" />} />
+                <Route path="/students" element={<Students />} />
+                <Route path="/students/new" element={<AddStudent />} />
+                <Route path="/students/:id" element={<StudentDetail />} />
                 <Route path="/pay" element={<Placeholder title="Log Payment" phase="Phase 5" />} />
                 <Route path="/months" element={<Placeholder title="Months & Reports" phase="Phase 6" />} />
                 <Route path="/settings" element={<Placeholder title="Settings" phase="Phase 7" />} />
