@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-slate-50 text-navy font-sans antialiased;
+    /* Respect iOS safe areas for a phone-friendly feel */
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
