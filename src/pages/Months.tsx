@@ -17,6 +17,7 @@ import {
   todayISO,
 } from '../lib/dates';
 import { useAddExpense, useExpensesForMonth, usePaymentsForMonth } from '../lib/hooks';
+import { monthReport } from '../lib/metrics';
 import type { ExpenseCategory, ExpenseRow, Method } from '../lib/types';
 import {
   Button,
@@ -46,13 +47,7 @@ export default function Months() {
   const payments = paymentsQ.data ?? [];
   const expenses = expensesQ.data ?? [];
 
-  const collected = payments.reduce((s, p) => s + Number(p.amount), 0);
-  const cash = payments.filter((p) => p.method === 'Cash').reduce((s, p) => s + Number(p.amount), 0);
-  const online = payments
-    .filter((p) => p.method === 'Online')
-    .reduce((s, p) => s + Number(p.amount), 0);
-  const spent = expenses.reduce((s, x) => s + Number(x.amount), 0);
-  const profit = collected - spent;
+  const { collected, spent, profit, cash, online } = monthReport(payments, expenses);
 
   const isThisMonth = monthKey === currentMonthKey();
 

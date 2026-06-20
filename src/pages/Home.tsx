@@ -3,6 +3,7 @@ import { Wallet, Coins, AlertTriangle, UserPlus, ReceiptText, CheckCircle2 } fro
 import { pkr } from '../lib/engine';
 import { currentMonthKey, formatMonthLabel } from '../lib/dates';
 import { useComputedEnrollments, usePaymentsForMonth } from '../lib/hooks';
+import { chaseList, dashboardMetrics } from '../lib/metrics';
 import { Button, Card, EmptyState, ErrorState, FlagBadge, Spinner, StatCard } from '../components/ui';
 
 export default function Home() {
@@ -10,18 +11,12 @@ export default function Home() {
   const { data: enrollments, isLoading, isError, error } = useComputedEnrollments();
   const paymentsQ = usePaymentsForMonth(monthKey);
 
-  const cashThisMonth = (paymentsQ.data ?? []).reduce((sum, p) => sum + Number(p.amount), 0);
-  const totalOwed = enrollments
-    .filter((e) => e.status === 'Active')
-    .reduce((sum, e) => sum + e.computed.balance, 0);
-  const overdue = enrollments.filter((e) => e.computed.flag === 'overdue');
-
-  // Chase list: worst-first — biggest balance first, then most days late.
-  const chase = [...overdue].sort(
-    (a, b) =>
-      b.computed.balance - a.computed.balance ||
-      b.computed.days_overdue - a.computed.days_overdue,
+  const { cashInMonth, totalOwed, overdueCount } = dashboardMetrics(
+    enrollments,
+    paymentsQ.data ?? [],
   );
+  // Chase list: overdue only, worst-first (biggest balance, then most days late).
+  const chase = chaseList(enrollments);
 
   return (
     <div className="space-y-6">
@@ -29,7 +24,7 @@ export default function Home() {
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <StatCard
           label={`Cash In · ${formatMonthLabel(monthKey)}`}
-          value={paymentsQ.isLoading ? '…' : pkr(cashThisMonth)}
+          value={paymentsQ.isLoading ? '…' : pkr(cashInMonth)}
           icon={<Wallet className="w-5 h-5" />}
           tone="gold"
         />
@@ -41,9 +36,9 @@ export default function Home() {
         />
         <StatCard
           label="Students Overdue"
-          value={isLoading ? '…' : String(overdue.length)}
+          value={isLoading ? '…' : String(overdueCount)}
           icon={<AlertTriangle className="w-5 h-5" />}
-          tone={overdue.length > 0 ? 'red' : 'navy'}
+          tone={overdueCount > 0 ? 'red' : 'navy'}
         />
       </section>
 
