@@ -9,6 +9,7 @@ import Students from './pages/Students';
 import AddStudent from './pages/AddStudent';
 import StudentDetail from './pages/StudentDetail';
 import LogPayment from './pages/LogPayment';
+import Months from './pages/Months';
 import Placeholder from './pages/Placeholder';
 
 const queryClient = new QueryClient({
@@ -36,7 +37,7 @@ export default function App() {
                 <Route path="/students/new" element={<AddStudent />} />
                 <Route path="/students/:id" element={<StudentDetail />} />
                 <Route path="/pay" element={<LogPayment />} />
-                <Route path="/months" element={<Placeholder title="Months & Reports" phase="Phase 6" />} />
+                <Route path="/months" element={<Months />} />
                 <Route path="/settings" element={<Placeholder title="Settings" phase="Phase 7" />} />
               </Route>
             </Route>
