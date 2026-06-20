@@ -13,6 +13,7 @@ export const qk = {
   enrollment: (id: number) => ['enrollment', id] as const,
   paymentsForEnrollment: (id: number) => ['payments', 'enrollment', id] as const,
   paymentsForMonth: (m: string) => ['payments', 'month', m] as const,
+  recentPayments: (limit: number) => ['payments', 'recent', limit] as const,
   expensesForMonth: (m: string) => ['expenses', 'month', m] as const,
   settings: ['settings'] as const,
 };
@@ -100,6 +101,13 @@ export function usePaymentsForMonth(monthKey: string) {
   });
 }
 
+export function useRecentPayments(limit = 12) {
+  return useQuery({
+    queryKey: qk.recentPayments(limit),
+    queryFn: () => api.fetchRecentPayments(limit),
+  });
+}
+
 export function useExpensesForMonth(monthKey: string) {
   return useQuery({
     queryKey: qk.expensesForMonth(monthKey),
@@ -142,6 +150,25 @@ export function useUpdateEnrollment() {
 export function useAddPayment() {
   const invalidate = useInvalidateAll();
   return useMutation({ mutationFn: api.insertPayment, onSuccess: invalidate });
+}
+
+export function useUpdatePayment() {
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: (vars: { id: number; patch: Parameters<typeof api.updatePayment>[1] }) =>
+      api.updatePayment(vars.id, vars.patch),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeletePayment() {
+  const invalidate = useInvalidateAll();
+  return useMutation({ mutationFn: (id: number) => api.deletePayment(id), onSuccess: invalidate });
+}
+
+export function useDeleteEnrollment() {
+  const invalidate = useInvalidateAll();
+  return useMutation({ mutationFn: (id: number) => api.deleteEnrollment(id), onSuccess: invalidate });
 }
 
 export function useAddExpense() {

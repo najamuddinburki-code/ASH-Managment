@@ -126,6 +126,13 @@ export async function updateEnrollment(
   return must(data, error);
 }
 
+// Delete an enrollment. Payments cascade-delete with it (see schema FK), so
+// callers must confirm with the owner first — this also removes payment history.
+export async function deleteEnrollment(id: number): Promise<void> {
+  const { error } = await supabase.from('enrollments').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
 // ---------------------------------------------------------------------
 // Payments
 // ---------------------------------------------------------------------
@@ -149,6 +156,17 @@ export async function fetchPaymentsForMonth(monthKey: string): Promise<PaymentRo
   return must(data, error);
 }
 
+// Most recent payments across all students (for the "Recent payments" manage
+// list on the Log Payment screen). Ordered newest-first by entry time.
+export async function fetchRecentPayments(limit = 12): Promise<PaymentRow[]> {
+  const { data, error } = await supabase
+    .from('payments')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  return must(data, error);
+}
+
 export type NewPayment = Pick<PaymentRow, 'enrollment_id' | 'date' | 'type' | 'method' | 'amount' | 'note'>;
 
 export async function insertPayment(p: NewPayment): Promise<PaymentRow> {
@@ -159,6 +177,19 @@ export async function insertPayment(p: NewPayment): Promise<PaymentRow> {
     .select()
     .single();
   return must(data, error);
+}
+
+export async function updatePayment(
+  id: number,
+  patch: Partial<Pick<PaymentRow, 'date' | 'type' | 'method' | 'amount' | 'note'>>,
+): Promise<PaymentRow> {
+  const { data, error } = await supabase.from('payments').update(patch).eq('id', id).select().single();
+  return must(data, error);
+}
+
+export async function deletePayment(id: number): Promise<void> {
+  const { error } = await supabase.from('payments').delete().eq('id', id);
+  if (error) throw new Error(error.message);
 }
 
 // ---------------------------------------------------------------------

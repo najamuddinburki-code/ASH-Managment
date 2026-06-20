@@ -12,3 +12,22 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
+
+/* When printing a receipt, show only the receipt card — hide app chrome. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .receipt-print,
+  .receipt-print * {
+    visibility: visible;
+  }
+  .receipt-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    box-shadow: none !important;
+    --tw-ring-color: transparent;
+  }
+}

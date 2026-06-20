@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   ChevronDown,
@@ -7,11 +7,13 @@ import {
   Phone,
   ReceiptText,
   Calculator,
+  Trash2,
 } from 'lucide-react';
-import { compute, pkr, type Enrollment as EngineEnrollment, type Status } from '../lib/engine';
+import { compute, pkr, type Computed, type Enrollment as EngineEnrollment, type Status } from '../lib/engine';
 import { formatDate } from '../lib/dates';
 import {
   useCourses,
+  useDeleteEnrollment,
   useEnrollment,
   usePaymentsForEnrollment,
   useUpdateEnrollment,
@@ -28,7 +30,17 @@ import {
   Spinner,
   StatusBadge,
 } from '../components/ui';
+import { PaymentListItem } from '../components/PaymentListItem';
 import type { EnrollmentRow } from '../lib/types';
+
+// Quick-pay link from the student page: suggest the type + amount that clears
+// the most relevant debt (admission first if owed, else this month's monthly).
+function payHref(id: number, c: Computed): string {
+  const owesAdmission = c.admission_owed > 0;
+  const type = owesAdmission ? 'Admission' : 'Monthly';
+  const amount = Math.round(owesAdmission ? c.admission_owed : c.monthly_owed);
+  return `/pay?enrollment=${id}&type=${type}&amount=${amount}`;
+}
 
 function toEngine(e: EnrollmentRow): EngineEnrollment {
   return {
@@ -47,12 +59,14 @@ function toEngine(e: EnrollmentRow): EngineEnrollment {
 
 export default function StudentDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const enrollmentId = Number(id);
 
   const enrollmentQ = useEnrollment(enrollmentId);
   const paymentsQ = usePaymentsForEnrollment(enrollmentId);
   const { data: courses } = useCourses();
   const updateEnrollment = useUpdateEnrollment();
+  const deleteEnrollment = useDeleteEnrollment();
 
   const [editing, setEditing] = useState(false);
   const [showWorking, setShowWorking] = useState(false);
@@ -126,7 +140,7 @@ export default function StudentDetail() {
         </dl>
 
         <div className="flex gap-3 mt-4">
-          <Link to={`/pay?enrollment=${e.id}`} className="flex-1">
+          <Link to={payHref(e.id, c)} className="flex-1">
             <Button variant="primary" className="w-full">
               <ReceiptText className="w-4 h-4" />
               Log Payment
@@ -148,6 +162,11 @@ export default function StudentDetail() {
           onSave={async (patch) => {
             await updateEnrollment.mutateAsync({ id: e.id, patch });
             setEditing(false);
+          }}
+          deleting={deleteEnrollment.isPending}
+          onDelete={async () => {
+            await deleteEnrollment.mutateAsync(e.id);
+            navigate('/students');
           }}
         />
       )}
@@ -172,18 +191,7 @@ export default function StudentDetail() {
         ) : (
           <Card className="divide-y divide-slate-100 overflow-hidden">
             {payments.map((p) => (
-              <div key={p.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                <div className="min-w-0">
-                  <p className="font-semibold text-navy">
-                    {p.type} · <span className="font-normal text-slate-500">{p.method}</span>
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    {formatDate(p.date)}
-                    {p.receipt_code ? ` · ${p.receipt_code}` : ''}
-                  </p>
-                </div>
-                <p className="font-bold text-emerald-600 shrink-0">{pkr(Number(p.amount))}</p>
-              </div>
+              <PaymentListItem key={p.id} payment={p} />
             ))}
           </Card>
         )}
@@ -257,11 +265,15 @@ function EditForm({
   courses,
   saving,
   onSave,
+  deleting,
+  onDelete,
 }: {
   enrollment: EnrollmentRow;
   courses: { id: number; name: string }[];
   saving: boolean;
   onSave: (patch: Parameters<ReturnType<typeof useUpdateEnrollment>['mutateAsync']>[0]['patch']) => Promise<void>;
+  deleting: boolean;
+  onDelete: () => Promise<void>;
 }) {
   const [name, setName] = useState(e.student_name);
   const [phone, setPhone] = useState(e.phone ?? '');
@@ -272,6 +284,7 @@ function EditForm({
   const [discount, setDiscount] = useState(String(Number(e.discount)));
   const [status, setStatus] = useState<Status>(e.status);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   async function submit(ev: FormEvent) {
     ev.preventDefault();
@@ -350,6 +363,50 @@ function EditForm({
           Save changes
         </Button>
       </form>
+
+      {/* Danger zone — delete the whole enrollment (and its payment history) */}
+      <div className="mt-4 pt-4 border-t border-slate-100">
+        {!confirmDelete ? (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setConfirmDelete(true)}
+            className="w-full !text-red-600 !ring-red-200 hover:!bg-red-50"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete student
+          </Button>
+        ) : (
+          <div className="rounded-xl bg-red-50 ring-1 ring-red-200 p-3">
+            <p className="text-sm font-semibold text-red-700">Delete this student?</p>
+            <p className="text-xs text-red-600/80 mt-1">
+              This permanently removes the enrollment and ALL its payment history. This cannot be
+              undone.
+            </p>
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              <Button type="button" variant="ghost" onClick={() => setConfirmDelete(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                loading={deleting}
+                onClick={async () => {
+                  setError(null);
+                  try {
+                    await onDelete();
+                  } catch (err) {
+                    setError((err as Error).message);
+                    setConfirmDelete(false);
+                  }
+                }}
+              >
+                Delete forever
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
     </Card>
   );
 }

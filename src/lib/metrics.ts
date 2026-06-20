@@ -34,11 +34,14 @@ export function methodSplit(payments: MethodRow[]): { cash: number; online: numb
 // ---------------------------------------------------------------------
 // Dashboard
 //   Cash In This Month = sum(payments this month)
+//   Expected This Month= sum(net monthly fee over Active enrollments)
+//                        (your monthly run-rate if everyone pays one month)
 //   Total Owed To You  = sum(balance over Active enrollments)
 //   Students Overdue   = count(flag === 'overdue')
 // ---------------------------------------------------------------------
 export interface DashboardMetrics {
   cashInMonth: number;
+  expectedThisMonth: number;
   totalOwed: number;
   overdueCount: number;
 }
@@ -47,12 +50,13 @@ export function dashboardMetrics(
   enrollments: EnrollmentLike[],
   monthPayments: AmountRow[],
 ): DashboardMetrics {
-  const totalOwed = enrollments
-    .filter((e) => e.status === 'Active')
-    .reduce((s, e) => s + e.computed.balance, 0);
+  const active = enrollments.filter((e) => e.status === 'Active');
+  const totalOwed = active.reduce((s, e) => s + e.computed.balance, 0);
+  const expectedThisMonth = active.reduce((s, e) => s + e.computed.net_monthly, 0);
   const overdueCount = enrollments.filter((e) => e.computed.flag === 'overdue').length;
   return {
     cashInMonth: sumAmounts(monthPayments),
+    expectedThisMonth,
     totalOwed,
     overdueCount,
   };
