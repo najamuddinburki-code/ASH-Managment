@@ -1,23 +1,46 @@
-import { GraduationCap } from 'lucide-react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from './auth/AuthProvider';
+import ProtectedRoute from './components/ProtectedRoute';
+import Layout from './components/Layout';
+import Login from './pages/Login';
+import Home from './pages/Home';
+import Placeholder from './pages/Placeholder';
 
-// Placeholder home for Phase 1. Real screens (auth, dashboard, students,
-// payments, reports, settings) arrive in later phases.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 30_000,
+    },
+  },
+});
+
 export default function App() {
   return (
-    <div className="min-h-screen bg-navy text-white flex flex-col items-center justify-center px-6 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-gold/15 ring-1 ring-gold/40 flex items-center justify-center mb-6">
-        <GraduationCap className="w-8 h-8 text-gold" />
-      </div>
-      <h1 className="text-2xl font-extrabold tracking-tight">American Skill Hub</h1>
-      <p className="text-gold font-semibold mt-1">Academy Management</p>
-      <p className="text-white/60 mt-6 max-w-sm text-sm leading-relaxed">
-        Project scaffold is ready. The dashboard, students, payments, and reports
-        screens are built in the next phases.
-      </p>
-      <div className="mt-8 inline-flex items-center gap-2 rounded-full bg-white/5 ring-1 ring-white/10 px-4 py-2 text-xs text-white/70">
-        <span className="w-2 h-2 rounded-full bg-emerald-400" />
-        Phase 1 · Setup complete
-      </div>
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+
+            <Route element={<ProtectedRoute />}>
+              <Route element={<Layout />}>
+                <Route path="/" element={<Home />} />
+                <Route path="/students" element={<Placeholder title="Students" phase="Phase 4" />} />
+                <Route path="/students/new" element={<Placeholder title="Add Student" phase="Phase 4" />} />
+                <Route path="/students/:id" element={<Placeholder title="Student" phase="Phase 4" />} />
+                <Route path="/pay" element={<Placeholder title="Log Payment" phase="Phase 5" />} />
+                <Route path="/months" element={<Placeholder title="Months & Reports" phase="Phase 6" />} />
+                <Route path="/settings" element={<Placeholder title="Settings" phase="Phase 7" />} />
+              </Route>
+            </Route>
+
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
