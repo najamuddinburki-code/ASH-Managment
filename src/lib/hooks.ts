@@ -179,6 +179,23 @@ export function useAddExpense() {
   });
 }
 
+export function useUpdateExpense() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { id: number; patch: Parameters<typeof api.updateExpense>[1] }) =>
+      api.updateExpense(vars.id, vars.patch),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['expenses'] }),
+  });
+}
+
+export function useDeleteExpense() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.deleteExpense(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['expenses'] }),
+  });
+}
+
 export function useAddCourse() {
   const qc = useQueryClient();
   return useMutation({

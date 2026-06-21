@@ -26,6 +26,7 @@ import {
 } from '../lib/hooks';
 import { monthReport } from '../lib/metrics';
 import { buildMonthCsv, downloadCsv } from '../lib/csv';
+import { ExpenseListItem } from '../components/ExpenseListItem';
 import type { ExpenseCategory, ExpenseRow, Method } from '../lib/types';
 import {
   Button,
@@ -352,20 +353,7 @@ function ExpensesSection({
       ) : (
         <Card className="divide-y divide-slate-100 overflow-hidden">
           {(expenses ?? []).map((x) => (
-            <div key={x.id} className="flex items-center justify-between gap-3 px-4 py-3">
-              <div className="min-w-0">
-                <p className="font-semibold text-navy">
-                  {x.category || 'Other'}
-                  {x.description ? <span className="font-normal text-slate-500"> · {x.description}</span> : ''}
-                </p>
-                <p className="text-xs text-slate-400">
-                  {formatDate(x.date)}
-                  {x.method ? ` · ${x.method}` : ''}
-                  {x.expense_code ? ` · ${x.expense_code}` : ''}
-                </p>
-              </div>
-              <p className="font-bold text-red-600 shrink-0">−{pkr(Number(x.amount))}</p>
-            </div>
+            <ExpenseListItem key={x.id} expense={x} />
           ))}
         </Card>
       )}
