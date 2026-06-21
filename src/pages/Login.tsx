@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { GraduationCap } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { Button, Field, Input } from '../components/ui';
 
@@ -25,14 +24,28 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-navy flex flex-col items-center justify-center px-6">
-      <div className="w-full max-w-sm">
+    <div className="relative min-h-screen bg-navy flex flex-col items-center justify-center px-6 overflow-hidden">
+      {/* Spotlight — radial cyan glow on navy (brand signature) */}
+      <div
+        className="pointer-events-none absolute -top-32 -right-24 w-[480px] h-[480px] rounded-full"
+        style={{
+          background:
+            'radial-gradient(circle, rgba(31,198,238,.20), rgba(31,198,238,0) 65%)',
+        }}
+      />
+      <div className="relative w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-gold/15 ring-1 ring-gold/40 flex items-center justify-center mb-4">
-            <GraduationCap className="w-8 h-8 text-gold" />
+          {/* ASH ● wordmark inside a logo pill */}
+          <div className="mx-auto mb-5 inline-flex items-center gap-2.5 rounded-full bg-white/5 ring-1 ring-white/10 px-5 py-3">
+            <span className="font-display text-4xl leading-none tracking-tight text-white">ASH</span>
+            <span className="w-3 h-3 rounded-full bg-cyan shrink-0" />
           </div>
-          <h1 className="text-xl font-extrabold text-white">American Skill Hub</h1>
-          <p className="text-gold font-semibold text-sm mt-0.5">Academy Management</p>
+          <h1 className="font-display text-3xl tracking-tight text-white leading-none">
+            American Skills Hub
+          </h1>
+          <p className="font-label text-cyan font-semibold text-sm tracking-[0.2em] uppercase mt-2">
+            Academy Management
+          </p>
         </div>
 
         <form

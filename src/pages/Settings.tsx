@@ -22,7 +22,7 @@ import {
 export default function Settings() {
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-extrabold text-navy">Settings</h1>
+      <h1 className="font-display text-2xl tracking-tight text-navy">Settings</h1>
       <AcademyNameSection />
       <CourseCatalogue />
     </div>
@@ -52,7 +52,7 @@ function AcademyNameSection() {
 
   return (
     <section>
-      <h2 className="text-sm font-bold text-navy uppercase tracking-wide mb-2 px-1">Academy</h2>
+      <h2 className="font-label text-sm font-bold text-navy uppercase tracking-[0.16em] mb-2 px-1">Academy</h2>
       <Card className="p-4 sm:p-5">
         {isLoading ? (
           <Spinner />
@@ -92,7 +92,7 @@ function CourseCatalogue() {
   return (
     <section>
       <div className="flex items-center justify-between mb-2 px-1">
-        <h2 className="text-sm font-bold text-navy uppercase tracking-wide">Course Catalogue</h2>
+        <h2 className="font-label text-sm font-bold text-navy uppercase tracking-[0.16em]">Course Catalogue</h2>
         <Button
           variant="ghost"
           onClick={() => {

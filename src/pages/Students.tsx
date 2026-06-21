@@ -47,7 +47,7 @@ export default function Students() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-extrabold text-navy">Students</h1>
+        <h1 className="font-display text-2xl tracking-tight text-navy">Students</h1>
         <Link to="/students/new">
           <Button variant="primary">
             <UserPlus className="w-4 h-4" />

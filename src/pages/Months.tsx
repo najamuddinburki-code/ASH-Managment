@@ -109,7 +109,7 @@ export default function Months() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-extrabold text-navy">Months &amp; Reports</h1>
+        <h1 className="font-display text-2xl tracking-tight text-navy">Months &amp; Reports</h1>
         <Button
           variant="ghost"
           onClick={handleExport}
@@ -132,7 +132,7 @@ export default function Months() {
         </button>
         <div className="text-center">
           <p className="font-bold text-navy">{formatMonthLabel(monthKey)}</p>
-          {isThisMonth && <p className="text-[11px] text-gold-dark font-semibold">This month</p>}
+          {isThisMonth && <p className="text-[11px] text-cyan-dark font-semibold">This month</p>}
         </div>
         <button
           onClick={() => setMonthKey((m) => shiftMonth(m, 1))}
@@ -149,7 +149,7 @@ export default function Months() {
           label="Collected"
           value={pkr(collected)}
           icon={<TrendingUp className="w-5 h-5" />}
-          tone="gold"
+          tone="cyan"
         />
         <StatCard
           label="Expenses"
@@ -161,7 +161,7 @@ export default function Months() {
           label="Month Profit"
           value={pkr(profit)}
           icon={<Wallet className="w-5 h-5" />}
-          tone={profit < 0 ? 'red' : 'gold'}
+          tone={profit < 0 ? 'red' : 'cyan'}
         />
       </section>
 
@@ -184,7 +184,7 @@ export default function Months() {
 
       {/* Collections list */}
       <section>
-        <h2 className="text-sm font-bold text-navy uppercase tracking-wide mb-2 px-1">
+        <h2 className="font-label text-sm font-bold text-navy uppercase tracking-[0.16em] mb-2 px-1">
           Collections ({payments.length})
         </h2>
         {paymentsQ.isLoading ? (
@@ -274,7 +274,7 @@ function ExpensesSection({
   return (
     <section>
       <div className="flex items-center justify-between mb-2 px-1">
-        <h2 className="text-sm font-bold text-navy uppercase tracking-wide">
+        <h2 className="font-label text-sm font-bold text-navy uppercase tracking-[0.16em]">
           Expenses ({(expenses ?? []).length})
         </h2>
         <Button variant="ghost" onClick={() => setOpen((v) => !v)} className="!py-2 !px-3 text-xs">

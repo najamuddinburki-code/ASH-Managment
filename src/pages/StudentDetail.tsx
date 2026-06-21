@@ -94,7 +94,7 @@ export default function StudentDetail() {
         <Link to="/students" className="text-slate-500 hover:text-navy">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <h1 className="text-xl font-extrabold text-navy truncate">{e.student_name}</h1>
+        <h1 className="font-display text-2xl tracking-tight text-navy truncate">{e.student_name}</h1>
       </div>
 
       {/* Summary */}
@@ -112,7 +112,7 @@ export default function StudentDetail() {
             {e.phone && (
               <a
                 href={`tel:${e.phone}`}
-                className="inline-flex items-center gap-1.5 text-sm text-navy mt-1 hover:text-gold-dark"
+                className="inline-flex items-center gap-1.5 text-sm text-navy mt-1 hover:text-cyan-dark"
               >
                 <Phone className="w-3.5 h-3.5" />
                 {e.phone}
@@ -120,8 +120,8 @@ export default function StudentDetail() {
             )}
           </div>
           <div className="text-right shrink-0">
-            <p className="text-xs uppercase tracking-wide text-slate-400">Balance</p>
-            <p className={`text-2xl font-extrabold ${c.balance > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+            <p className="font-label text-xs uppercase tracking-[0.16em] text-slate-400">Balance</p>
+            <p className={`font-display text-3xl tracking-tight leading-none mt-1 ${c.balance > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
               {pkr(c.balance)}
             </p>
           </div>
@@ -173,7 +173,7 @@ export default function StudentDetail() {
 
       {/* Payment history */}
       <section>
-        <h2 className="text-sm font-bold text-navy uppercase tracking-wide mb-2 px-1">
+        <h2 className="font-label text-sm font-bold text-navy uppercase tracking-[0.16em] mb-2 px-1">
           Payment History
         </h2>
         {paymentsQ.isLoading ? (

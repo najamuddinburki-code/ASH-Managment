@@ -11,7 +11,7 @@ A **cloud web app** for a single academy owner ("American Skill Hub - IT (Comput
 ## Tech stack (DECIDED — do not change)
 
 - **Frontend:** React + Vite + TypeScript
-- **Styling:** Tailwind CSS. Theme: deep navy (`#0B1F3A`), gold (`#C8A24B`), white, high contrast. Mobile-first.
+- **Styling:** Tailwind CSS. Brand & Design System v1.0 — deep navy (`#0C0B2E`), signal cyan accent (`#1FC6EE`), indigo (`#1C1B5E`), cream (`#E7E5DF`), white, high contrast. Mobile-first. Type: Anton (display/big numbers), Barlow Condensed (labels/eyebrows), Inter (body). Buttons are pills; the "ASH ●" wordmark with its cyan dot is the brand mark.
 - **Backend + DB + Auth:** Supabase (hosted Postgres). Use the `@supabase/supabase-js` client.
 - **Hosting target:** Vercel or Netlify (frontend) + Supabase (data). All free tier.
 - **State/data:** TanStack Query (`@tanstack/react-query`) for fetching/caching Supabase data.
@@ -60,7 +60,7 @@ Put this in a single pure module `src/lib/engine.ts` with unit tests (`engine.te
 ## Screens to build (in this order)
 
 1. **Auth** — Supabase email/password. Single owner. Simple login page.
-2. **Home / Dashboard** — three big cards (Cash In This Month, Total Owed, Students Overdue), action buttons (Add Student, Log Payment), and the **chase list** (overdue, worst-first: name · owes · days late). Calm, navy/gold.
+2. **Home / Dashboard** — three big cards (Cash In This Month, Total Owed, Students Overdue), action buttons (Add Student, Log Payment), and the **chase list** (overdue, worst-first: name · owes · days late). Calm, navy/cyan.
 3. **Students** — list with color-coded rows (red overdue / green ok / grey closed): Name · Course · Monthly · Status · Paid · Balance. "Add Student" form. Row → detail view (full payment history, edit fees/status). Engine "working" numbers in a collapsible section, hidden by default.
 4. **Log Payment** — form: pick enrollment (searchable), type (Admission/Monthly), method (Cash/Online), amount, date (default today). Hint: "This records money received; balance updates automatically."
 5. **Months / Reports** — month picker → that month's collections, expenses (add-expense form here), and profit (collected − expenses).
@@ -91,5 +91,5 @@ Instructor commission · fixed course durations · refunds/reversals · attendan
 - Engine unit tests pass against `TEST_CASES.md`.
 - Owner can: log in, add a student, log a payment, see balance/flag update, mark Completed/Dropped, add an expense, see month profit, and read the chase list sorted worst-first.
 - Works responsively on a phone screen.
-- Navy/gold theme applied. PKR formatting everywhere.
+- Navy/cyan brand theme applied (Anton/Barlow Condensed/Inter, ASH wordmark). PKR formatting everywhere.
 - README explains how to run locally and deploy free.

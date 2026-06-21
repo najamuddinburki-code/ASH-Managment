@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Home, Users, Wallet, CalendarDays, Settings as SettingsIcon, LogOut } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { useSettings } from '../lib/hooks';
+import { BrandMark } from './ui';
 
 const navItems = [
   { to: '/', label: 'Home', icon: Home, end: true },
@@ -16,7 +17,7 @@ export default function Layout() {
   const navigate = useNavigate();
   const { data: settings } = useSettings();
   const academyName =
-    settings?.find((s) => s.key === 'academy_name')?.value ?? 'American Skill Hub';
+    settings?.find((s) => s.key === 'academy_name')?.value ?? 'American Skills Hub';
 
   async function handleSignOut() {
     await signOut();
@@ -24,13 +25,19 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-cream-light flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-20 bg-navy text-white">
-        <div className="mx-auto max-w-3xl px-4 h-14 flex items-center justify-between">
-          <div className="min-w-0">
-            <p className="text-[11px] uppercase tracking-widest text-gold font-semibold">Academy</p>
-            <h1 className="text-sm font-bold truncate leading-tight">{academyName}</h1>
+        <div className="mx-auto max-w-3xl px-4 h-16 flex items-center justify-between gap-3">
+          <div className="min-w-0 flex items-center gap-3">
+            <BrandMark onDark size="md" />
+            <span className="hidden sm:block h-7 w-px bg-white/15" />
+            <div className="min-w-0">
+              <p className="font-label text-[11px] uppercase tracking-[0.2em] text-cyan font-semibold leading-none">
+                Academy
+              </p>
+              <h1 className="text-sm font-bold truncate leading-tight mt-0.5">{academyName}</h1>
+            </div>
           </div>
           <button
             onClick={handleSignOut}
@@ -57,13 +64,13 @@ export default function Layout() {
               end={end}
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center gap-0.5 py-2.5 text-[11px] font-medium transition ${
-                  isActive ? 'text-gold-dark' : 'text-slate-500 hover:text-navy'
+                  isActive ? 'text-cyan-dark' : 'text-slate-500 hover:text-navy'
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-gold-dark' : ''}`} />
+                  <Icon className={`w-5 h-5 ${isActive ? 'text-cyan-dark' : ''}`} />
                   {label}
                 </>
               )}

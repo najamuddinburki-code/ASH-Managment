@@ -17,12 +17,13 @@ export function Button({
   disabled,
   ...rest
 }: ButtonProps) {
+  // Pills are a brand signature (100px radius). Inter 800 labels.
   const base =
-    'inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none';
+    'inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-extrabold transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none';
   const variants: Record<string, string> = {
-    primary: 'bg-gold text-navy hover:bg-gold-light shadow-sm',
+    primary: 'bg-cyan text-navy hover:bg-cyan-light shadow-sm',
     secondary: 'bg-navy text-white hover:bg-navy-light',
-    ghost: 'bg-white text-navy ring-1 ring-slate-200 hover:bg-slate-50',
+    ghost: 'bg-white text-navy ring-1 ring-slate-200 hover:bg-cyan-tint',
     danger: 'bg-red-600 text-white hover:bg-red-700',
   };
   return (
@@ -56,23 +57,60 @@ export function StatCard({
   label: string;
   value: string;
   icon?: ReactNode;
-  tone?: 'navy' | 'gold' | 'red';
+  tone?: 'navy' | 'cyan' | 'red';
 }) {
   const tones: Record<string, string> = {
     navy: 'bg-navy text-white',
-    gold: 'bg-gold text-navy',
+    cyan: 'bg-cyan text-navy',
     red: 'bg-red-600 text-white',
   };
   return (
     <div className={`rounded-2xl p-4 sm:p-5 shadow-sm ${tones[tone]}`}>
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium uppercase tracking-wide opacity-80">{label}</span>
+        <span className="font-label text-[12px] font-semibold uppercase tracking-[0.18em] opacity-80">
+          {label}
+        </span>
         {icon && <span className="opacity-80">{icon}</span>}
       </div>
-      <div className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight break-words tabular-nums">
+      {/* Anton display for the hero number — the brand's "card number" role */}
+      <div className="mt-2 font-display text-3xl sm:text-4xl tracking-tight leading-none break-words">
         {value}
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------
+// BrandMark — the "ASH ●" wordmark. The cyan dot is non-negotiable.
+// ---------------------------------------------------------------------
+export function BrandMark({
+  onDark = false,
+  size = 'md',
+  withWordmark = false,
+}: {
+  onDark?: boolean;
+  size?: 'sm' | 'md' | 'lg';
+  withWordmark?: boolean;
+}) {
+  const text = { sm: 'text-lg', md: 'text-2xl', lg: 'text-4xl' }[size];
+  const dot = { sm: 'w-1.5 h-1.5', md: 'w-2 h-2', lg: 'w-3 h-3' }[size];
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={`font-display leading-none tracking-tight ${text} ${onDark ? 'text-white' : 'text-navy'}`}>
+        ASH
+      </span>
+      <span className={`${dot} rounded-full bg-cyan shrink-0`} />
+      {withWordmark && (
+        <>
+          <span className={`mx-1 h-5 w-px ${onDark ? 'bg-white/20' : 'bg-slate-300'}`} />
+          <span
+            className={`font-extrabold text-[10px] tracking-[0.12em] ${onDark ? 'text-white' : 'text-navy'}`}
+          >
+            AMERICAN SKILLS HUB
+          </span>
+        </>
+      )}
+    </span>
   );
 }
 
@@ -127,7 +165,7 @@ export function Field({
 }
 
 const inputCls =
-  'w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-navy placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-gold focus:border-gold transition';
+  'w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-navy placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-cyan focus:border-cyan transition';
 
 export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={`${inputCls} ${props.className ?? ''}`} />;
