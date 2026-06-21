@@ -56,3 +56,18 @@ export function shiftMonth(monthKey: string, n: number): string {
   const nm = (total % 12) + 1;
   return `${ny}-${String(nm).padStart(2, '0')}`;
 }
+
+// A sensible default date INSIDE a given month: today when it's the current
+// month, otherwise the first of that month. Keeps the add-expense form pointed
+// at the month the owner is actually viewing.
+export function defaultDateForMonth(monthKey: string): string {
+  return monthKey === currentMonthKey() ? todayISO() : `${monthKey}-01`;
+}
+
+// Inclusive first/last day of a 'YYYY-MM' key, for an <input type="date"> min/max.
+export function monthDateLimits(monthKey: string): { min: string; max: string } {
+  const [y, m] = monthKey.split('-').map(Number);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const lastDay = new Date(y, m, 0).getDate(); // day 0 of next month = last day of this
+  return { min: `${y}-${pad(m)}-01`, max: `${y}-${pad(m)}-${pad(lastDay)}` };
+}

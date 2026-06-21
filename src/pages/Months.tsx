@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -12,10 +12,11 @@ import {
 import { pkr } from '../lib/engine';
 import {
   currentMonthKey,
+  defaultDateForMonth,
   formatDate,
   formatMonthLabel,
+  monthDateLimits,
   shiftMonth,
-  todayISO,
 } from '../lib/dates';
 import {
   useAddExpense,
@@ -241,7 +242,12 @@ function ExpensesSection({
 }) {
   const addExpense = useAddExpense();
   const [open, setOpen] = useState(false);
-  const [date, setDate] = useState(todayISO());
+  // Default the date to the month the owner is viewing (today if it's the
+  // current month) and re-sync whenever they navigate, so an expense added
+  // while viewing another month doesn't silently land in the current one.
+  const [date, setDate] = useState(() => defaultDateForMonth(monthKey));
+  useEffect(() => setDate(defaultDateForMonth(monthKey)), [monthKey]);
+  const dateLimits = monthDateLimits(monthKey);
   const [category, setCategory] = useState<ExpenseCategory>('Rent');
   const [description, setDescription] = useState('');
   const [method, setMethod] = useState<Method>('Cash');
@@ -254,6 +260,10 @@ function ExpensesSection({
     const amt = Number(amount);
     if (Number.isNaN(amt) || amt <= 0) {
       setError('Amount must be greater than zero.');
+      return;
+    }
+    if (date < dateLimits.min || date > dateLimits.max) {
+      setError(`Pick a date within ${formatMonthLabel(monthKey)}.`);
       return;
     }
     try {
@@ -288,8 +298,15 @@ function ExpensesSection({
         <Card className="p-4 mb-2">
           <form onSubmit={submit} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Date">
-                <Input type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
+              <Field label="Date" hint={`Within ${formatMonthLabel(monthKey)}.`}>
+                <Input
+                  type="date"
+                  required
+                  min={dateLimits.min}
+                  max={dateLimits.max}
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                />
               </Field>
               <Field label="Category">
                 <Select value={category} onChange={(e) => setCategory(e.target.value as ExpenseCategory)}>
