@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Info } from 'lucide-react';
-import { pkr } from '../lib/engine';
 import { todayISO } from '../lib/dates';
 import { useAddEnrollment, useCourses } from '../lib/hooks';
 import { Button, Card, Field, Input, Select } from '../components/ui';
@@ -20,7 +19,6 @@ export default function AddStudent() {
   const [dueDay, setDueDay] = useState('5');
   const [admissionFee, setAdmissionFee] = useState('0');
   const [monthlyFee, setMonthlyFee] = useState('0');
-  const [discount, setDiscount] = useState('0');
   const [error, setError] = useState<string | null>(null);
 
   // Selecting a course pre-fills its suggested fees (owner can still override).
@@ -54,15 +52,13 @@ export default function AddStudent() {
         due_day: due,
         admission_fee: Number(admissionFee) || 0,
         monthly_fee: Number(monthlyFee) || 0,
-        discount: Number(discount) || 0,
+        discount: 0,
       });
       navigate(`/students/${created.id}`);
     } catch (err) {
       setError((err as Error).message);
     }
   }
-
-  const net = Math.max((Number(monthlyFee) || 0) - (Number(discount) || 0), 0);
 
   return (
     <div className="space-y-4">
@@ -142,10 +138,6 @@ export default function AddStudent() {
               />
             </Field>
           </div>
-
-          <Field label="Monthly discount (PKR)" hint={`Net monthly after discount: ${pkr(net)}`}>
-            <Input type="number" min={0} value={discount} onChange={(e) => setDiscount(e.target.value)} />
-          </Field>
 
           {error && (
             <p className="text-sm text-red-600 bg-red-50 ring-1 ring-red-200 rounded-lg px-3 py-2">
