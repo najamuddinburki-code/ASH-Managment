@@ -70,12 +70,12 @@ export default function AddStudent() {
         <Link to="/students" className="text-slate-500 hover:text-navy">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <h1 className="text-xl font-extrabold text-navy">Add Student</h1>
+        <h1 className="font-display text-2xl tracking-tight text-navy">Add Student</h1>
       </div>
 
       {/* Domain hint: typing a fee ≠ receiving money */}
-      <div className="rounded-xl bg-gold/10 ring-1 ring-gold/30 p-3 flex gap-2.5 text-sm text-navy">
-        <Info className="w-4 h-4 mt-0.5 shrink-0 text-gold-dark" />
+      <div className="rounded-xl bg-cyan/10 ring-1 ring-cyan/30 p-3 flex gap-2.5 text-sm text-navy">
+        <Info className="w-4 h-4 mt-0.5 shrink-0 text-cyan-dark" />
         <p>
           Setting fees only defines what's <strong>expected</strong>. The new student will show a
           balance straight away — it only drops once you <strong>log a payment</strong>.

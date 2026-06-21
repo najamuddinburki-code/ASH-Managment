@@ -43,7 +43,7 @@ export default function Home() {
           label={`Cash In · ${formatMonthLabel(monthKey)}`}
           value={paymentsQ.isLoading ? '…' : pkr(cashInMonth)}
           icon={<Wallet className="w-5 h-5" />}
-          tone="gold"
+          tone="cyan"
         />
         <StatCard
           label={`Expected · ${formatMonthLabel(monthKey)}`}
@@ -84,7 +84,7 @@ export default function Home() {
       {/* Chase list */}
       <section>
         <div className="flex items-center justify-between mb-2 px-1">
-          <h2 className="text-sm font-bold text-navy uppercase tracking-wide">Chase List</h2>
+          <h2 className="font-label text-sm font-bold text-navy uppercase tracking-[0.16em]">Chase List</h2>
           {chase.length > 0 && (
             <span className="text-xs text-slate-500">{chase.length} overdue · worst first</span>
           )}
@@ -110,7 +110,7 @@ export default function Home() {
               <div key={e.id} className="px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
                   <Link to={`/students/${e.id}`} className="min-w-0 group">
-                    <p className="font-semibold text-navy truncate group-hover:text-gold-dark">
+                    <p className="font-semibold text-navy truncate group-hover:text-cyan-dark">
                       {e.student_name}
                     </p>
                     <p className="text-xs text-slate-500 truncate">

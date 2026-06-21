@@ -127,10 +127,10 @@ export default function LogPayment() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-extrabold text-navy">Log Payment</h1>
+      <h1 className="font-display text-2xl tracking-tight text-navy">Log Payment</h1>
 
-      <div className="rounded-xl bg-gold/10 ring-1 ring-gold/30 p-3 flex gap-2.5 text-sm text-navy">
-        <Info className="w-4 h-4 mt-0.5 shrink-0 text-gold-dark" />
+      <div className="rounded-xl bg-cyan/10 ring-1 ring-cyan/30 p-3 flex gap-2.5 text-sm text-navy">
+        <Info className="w-4 h-4 mt-0.5 shrink-0 text-cyan-dark" />
         <p>This records money received; the balance updates automatically.</p>
       </div>
 
@@ -234,7 +234,7 @@ export default function LogPayment() {
       {/* Recent payments — edit or delete to fix a mistake */}
       <section>
         <div className="flex items-center justify-between mb-2 px-1">
-          <h2 className="text-sm font-bold text-navy uppercase tracking-wide inline-flex items-center gap-2">
+          <h2 className="font-label text-sm font-bold text-navy uppercase tracking-[0.16em] inline-flex items-center gap-2">
             <History className="w-4 h-4 text-slate-400" />
             Recent payments
           </h2>
