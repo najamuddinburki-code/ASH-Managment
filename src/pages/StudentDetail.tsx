@@ -130,7 +130,7 @@ export default function StudentDetail() {
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2 mt-4 pt-4 border-t border-slate-100 text-sm">
           <Detail label="Joined" value={formatDate(e.join_date)} />
           <Detail label="Due day" value={String(e.due_day)} />
-          <Detail label="Monthly (net)" value={`${pkr(c.net_monthly)}/mo`} />
+          <Detail label="Monthly" value={`${pkr(c.net_monthly)}/mo`} />
           <Detail label="Total paid" value={pkr(c.total_paid)} />
           <Detail label="Next due" value={c.next_due ? formatDate(toISO(c.next_due)) : '—'} />
           <Detail
@@ -281,7 +281,6 @@ function EditForm({
   const [dueDay, setDueDay] = useState(String(e.due_day));
   const [admissionFee, setAdmissionFee] = useState(String(Number(e.admission_fee)));
   const [monthlyFee, setMonthlyFee] = useState(String(Number(e.monthly_fee)));
-  const [discount, setDiscount] = useState(String(Number(e.discount)));
   const [status, setStatus] = useState<Status>(e.status);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -304,7 +303,6 @@ function EditForm({
         due_day: due,
         admission_fee: Number(admissionFee) || 0,
         monthly_fee: Number(monthlyFee) || 0,
-        discount: Number(discount) || 0,
         status,
       });
     } catch (err) {
@@ -351,10 +349,6 @@ function EditForm({
             <Input type="number" min={0} value={monthlyFee} onChange={(ev) => setMonthlyFee(ev.target.value)} />
           </Field>
         </div>
-        <Field label="Monthly discount (PKR)">
-          <Input type="number" min={0} value={discount} onChange={(ev) => setDiscount(ev.target.value)} />
-        </Field>
-
         {error && (
           <p className="text-sm text-red-600 bg-red-50 ring-1 ring-red-200 rounded-lg px-3 py-2">{error}</p>
         )}
