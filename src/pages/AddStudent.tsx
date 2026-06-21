@@ -16,7 +16,6 @@ export default function AddStudent() {
   const [phone, setPhone] = useState('');
   const [courseId, setCourseId] = useState<string>('');
   const [joinDate, setJoinDate] = useState(todayISO());
-  const [dueDay, setDueDay] = useState('5');
   const [admissionFee, setAdmissionFee] = useState('0');
   const [monthlyFee, setMonthlyFee] = useState('0');
   const [error, setError] = useState<string | null>(null);
@@ -35,9 +34,8 @@ export default function AddStudent() {
     e.preventDefault();
     setError(null);
 
-    const due = parseInt(dueDay, 10);
-    if (Number.isNaN(due) || due < 1 || due > 31) {
-      setError('Due day must be between 1 and 31.');
+    if (!joinDate) {
+      setError('Please pick a join date.');
       return;
     }
     const course = activeCourses.find((c) => String(c.id) === courseId);
@@ -49,7 +47,8 @@ export default function AddStudent() {
         course_id: course?.id ?? null,
         course_name: course?.name ?? null,
         join_date: joinDate,
-        due_day: due,
+        // The monthly fee falls due on the join day-of-month, every month.
+        due_day: Number(joinDate.slice(8, 10)) || 1,
         admission_fee: Number(admissionFee) || 0,
         monthly_fee: Number(monthlyFee) || 0,
         discount: 0,
@@ -104,21 +103,12 @@ export default function AddStudent() {
             </Select>
           </Field>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Join date">
-              <Input type="date" required value={joinDate} onChange={(e) => setJoinDate(e.target.value)} />
-            </Field>
-            <Field label="Due day (1–31)">
-              <Input
-                type="number"
-                min={1}
-                max={31}
-                required
-                value={dueDay}
-                onChange={(e) => setDueDay(e.target.value)}
-              />
-            </Field>
-          </div>
+          <Field
+            label="Join date"
+            hint="The monthly fee falls due on this day each month (e.g. join on the 20th → due the 20th every month)."
+          >
+            <Input type="date" required value={joinDate} onChange={(e) => setJoinDate(e.target.value)} />
+          </Field>
 
           <div className="grid grid-cols-2 gap-3">
             <Field label="Admission fee (PKR)">

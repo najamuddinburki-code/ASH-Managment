@@ -278,7 +278,6 @@ function EditForm({
   const [name, setName] = useState(e.student_name);
   const [phone, setPhone] = useState(e.phone ?? '');
   const [courseId, setCourseId] = useState(e.course_id ? String(e.course_id) : '');
-  const [dueDay, setDueDay] = useState(String(e.due_day));
   const [admissionFee, setAdmissionFee] = useState(String(Number(e.admission_fee)));
   const [monthlyFee, setMonthlyFee] = useState(String(Number(e.monthly_fee)));
   const [status, setStatus] = useState<Status>(e.status);
@@ -288,11 +287,6 @@ function EditForm({
   async function submit(ev: FormEvent) {
     ev.preventDefault();
     setError(null);
-    const due = parseInt(dueDay, 10);
-    if (Number.isNaN(due) || due < 1 || due > 31) {
-      setError('Due day must be between 1 and 31.');
-      return;
-    }
     const course = courses.find((c) => String(c.id) === courseId);
     try {
       await onSave({
@@ -300,7 +294,8 @@ function EditForm({
         phone: phone.trim() || null,
         course_id: course?.id ?? null,
         course_name: course?.name ?? null,
-        due_day: due,
+        // Monthly due date tracks the join day-of-month.
+        due_day: Number(e.join_date.slice(8, 10)) || 1,
         admission_fee: Number(admissionFee) || 0,
         monthly_fee: Number(monthlyFee) || 0,
         status,
@@ -329,18 +324,13 @@ function EditForm({
             ))}
           </Select>
         </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Due day (1–31)">
-            <Input type="number" min={1} max={31} value={dueDay} onChange={(ev) => setDueDay(ev.target.value)} />
-          </Field>
-          <Field label="Status" hint="Completed / Dropped freezes monthly accrual.">
+        <Field label="Status" hint="Completed / Dropped freezes monthly accrual.">
             <Select value={status} onChange={(ev) => setStatus(ev.target.value as Status)}>
               <option value="Active">Active</option>
               <option value="Completed">Completed</option>
               <option value="Dropped">Dropped</option>
             </Select>
-          </Field>
-        </div>
+        </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Admission fee (PKR)">
             <Input type="number" min={0} value={admissionFee} onChange={(ev) => setAdmissionFee(ev.target.value)} />
