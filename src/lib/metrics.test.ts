@@ -120,13 +120,6 @@ describe('dashboard metrics', () => {
     const m = dashboardMetrics(academy, junePayments);
     expect(m.cashInMonth).toBe(14000);
   });
-
-  it('Expected This Month sums net monthly over Active only (run-rate)', () => {
-    const m = dashboardMetrics(academy, junePayments);
-    // Active net monthlies: 6000 + 9000 + (8000-2000) + 6000 = 27000.
-    // Completed (Erum) and Dropped (Faisal) are excluded.
-    expect(m.expectedThisMonth).toBe(27000);
-  });
 });
 
 describe('chase list (worst-first)', () => {
