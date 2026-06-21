@@ -218,6 +218,19 @@ export async function insertExpense(x: NewExpense): Promise<ExpenseRow> {
   return must(data, error);
 }
 
+export async function updateExpense(
+  id: number,
+  patch: Partial<Pick<ExpenseRow, 'date' | 'category' | 'description' | 'method' | 'amount'>>,
+): Promise<ExpenseRow> {
+  const { data, error } = await supabase.from('expenses').update(patch).eq('id', id).select().single();
+  return must(data, error);
+}
+
+export async function deleteExpense(id: number): Promise<void> {
+  const { error } = await supabase.from('expenses').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
 // ---------------------------------------------------------------------
 // Settings (key/value)
 // ---------------------------------------------------------------------

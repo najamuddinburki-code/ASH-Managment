@@ -110,12 +110,18 @@ export function compute(e: Enrollment, paid: PaidTotals, today = new Date()): Co
   }
   const next_due = closed ? null : addMonths(first_due, months_paid);
 
-  const days_overdue =
-    closed || !next_due ? 0 : Math.max(daysBetween(new Date(today), new Date(next_due)), 0);
+  // Signed days from the due date (positive = past due, 0 = due today, negative
+  // = not due yet). The due date is the join-day anniversary, so a brand-new
+  // unpaid student is due on day one — the moment the date ARRIVES, not the day
+  // after. A student who's paid up to date has next_due in the future
+  // (overdue_by < 0) and stays green until that anniversary comes around.
+  const overdue_by =
+    closed || !next_due ? -Infinity : daysBetween(new Date(today), new Date(next_due));
+  const days_overdue = Math.max(overdue_by, 0);
 
   let flag: Flag;
   if (closed) flag = 'closed';
-  else if (days_overdue > 0 && balance > 0) flag = 'overdue';
+  else if (overdue_by >= 0 && balance > 0) flag = 'overdue';
   else flag = 'up_to_date';
 
   return {

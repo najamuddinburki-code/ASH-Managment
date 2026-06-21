@@ -107,8 +107,10 @@ export default function Home() {
                       {e.student_name}
                     </p>
                     <p className="text-xs text-slate-500 truncate">
-                      {e.course_name || 'No course'} · {e.computed.days_overdue} day
-                      {e.computed.days_overdue === 1 ? '' : 's'} late
+                      {e.course_name || 'No course'} ·{' '}
+                      {e.computed.days_overdue === 0
+                        ? 'due today'
+                        : `${e.computed.days_overdue} day${e.computed.days_overdue === 1 ? '' : 's'} late`}
                     </p>
                   </Link>
                   <p className="font-bold text-red-600 shrink-0">{pkr(e.computed.balance)}</p>

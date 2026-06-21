@@ -72,8 +72,9 @@ export default function AddStudent() {
       <div className="rounded-xl bg-cyan/10 ring-1 ring-cyan/30 p-3 flex gap-2.5 text-sm text-navy">
         <Info className="w-4 h-4 mt-0.5 shrink-0 text-cyan-dark" />
         <p>
-          Setting fees only defines what's <strong>expected</strong>. The new student will show a
-          balance straight away — it only drops once you <strong>log a payment</strong>.
+          Setting fees only defines what's <strong>expected</strong>. The new student is{' '}
+          <strong>due from day one</strong> — they'll show a balance and appear overdue straight
+          away. It only clears once you <strong>log a payment</strong>.
         </p>
       </div>
 
