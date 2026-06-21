@@ -6,7 +6,6 @@ import {
   UserPlus,
   ReceiptText,
   CheckCircle2,
-  Target,
 } from 'lucide-react';
 import { pkr } from '../lib/engine';
 import { currentMonthKey, formatMonthLabel } from '../lib/dates';
@@ -28,7 +27,7 @@ export default function Home() {
   const { data: enrollments, isLoading, isError, error } = useComputedEnrollments();
   const paymentsQ = usePaymentsForMonth(monthKey);
 
-  const { cashInMonth, expectedThisMonth, totalOwed, overdueCount } = dashboardMetrics(
+  const { cashInMonth, totalOwed, overdueCount } = dashboardMetrics(
     enrollments,
     paymentsQ.data ?? [],
   );
@@ -38,18 +37,12 @@ export default function Home() {
   return (
     <div className="space-y-6">
       {/* Stat cards */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <section className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <StatCard
           label={`Cash In · ${formatMonthLabel(monthKey)}`}
           value={paymentsQ.isLoading ? '…' : pkr(cashInMonth)}
           icon={<Wallet className="w-5 h-5" />}
           tone="cyan"
-        />
-        <StatCard
-          label={`Expected · ${formatMonthLabel(monthKey)}`}
-          value={isLoading ? '…' : pkr(expectedThisMonth)}
-          icon={<Target className="w-5 h-5" />}
-          tone="navy"
         />
         <StatCard
           label="Total Owed To You"
