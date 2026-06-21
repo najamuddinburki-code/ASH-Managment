@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
+  Download,
   Plus,
   TrendingUp,
   TrendingDown,
@@ -16,8 +17,15 @@ import {
   shiftMonth,
   todayISO,
 } from '../lib/dates';
-import { useAddExpense, useExpensesForMonth, usePaymentsForMonth } from '../lib/hooks';
+import {
+  useAddExpense,
+  useComputedEnrollments,
+  useExpensesForMonth,
+  usePaymentsForMonth,
+  useSettings,
+} from '../lib/hooks';
 import { monthReport } from '../lib/metrics';
+import { buildMonthCsv, downloadCsv } from '../lib/csv';
 import type { ExpenseCategory, ExpenseRow, Method } from '../lib/types';
 import {
   Button,
@@ -29,6 +37,17 @@ import {
   Spinner,
   StatCard,
 } from '../components/ui';
+
+// Filename-safe slug from the academy name, e.g. "american-skill-hub".
+function slugify(s: string): string {
+  return (
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 40) || 'academy'
+  );
+}
 
 const CATEGORIES: ExpenseCategory[] = [
   'Rent',
@@ -43,6 +62,8 @@ export default function Months() {
   const [monthKey, setMonthKey] = useState(currentMonthKey());
   const paymentsQ = usePaymentsForMonth(monthKey);
   const expensesQ = useExpensesForMonth(monthKey);
+  const enrollmentsQ = useComputedEnrollments();
+  const settingsQ = useSettings();
 
   const payments = paymentsQ.data ?? [];
   const expenses = expensesQ.data ?? [];
@@ -50,10 +71,55 @@ export default function Months() {
   const { collected, spent, profit, cash, online } = monthReport(payments, expenses);
 
   const isThisMonth = monthKey === currentMonthKey();
+  const academyName =
+    (settingsQ.data ?? []).find((s) => s.key === 'academy_name')?.value || 'Academy';
+  const nothingToExport = payments.length === 0 && expenses.length === 0;
+
+  function handleExport() {
+    const byId = new Map(enrollmentsQ.data.map((e) => [e.id, e]));
+    const csv = buildMonthCsv({
+      title: `${academyName} — ${formatMonthLabel(monthKey)}`,
+      collected,
+      spent,
+      profit,
+      payments: payments.map((p) => {
+        const e = byId.get(p.enrollment_id);
+        return {
+          date: p.date,
+          receipt_code: p.receipt_code,
+          student: e?.student_name ?? '',
+          course: e?.course_name ?? '',
+          type: p.type,
+          method: p.method,
+          amount: Number(p.amount),
+        };
+      }),
+      expenses: expenses.map((x) => ({
+        date: x.date,
+        expense_code: x.expense_code,
+        category: x.category ?? '',
+        description: x.description ?? '',
+        method: x.method ?? '',
+        amount: Number(x.amount),
+      })),
+    });
+    downloadCsv(`${slugify(academyName)}-${monthKey}.csv`, csv);
+  }
 
   return (
     <div className="space-y-5">
-      <h1 className="text-xl font-extrabold text-navy">Months &amp; Reports</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-extrabold text-navy">Months &amp; Reports</h1>
+        <Button
+          variant="ghost"
+          onClick={handleExport}
+          disabled={nothingToExport}
+          className="!py-2 !px-3 text-xs"
+        >
+          <Download className="w-4 h-4" />
+          CSV
+        </Button>
+      </div>
 
       {/* Month picker */}
       <div className="flex items-center justify-between rounded-2xl bg-white ring-1 ring-slate-200 p-2">

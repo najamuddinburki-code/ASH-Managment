@@ -1,33 +1,59 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Check, Info, ReceiptText, Search, X } from 'lucide-react';
+import { History, Info, ReceiptText, Search, X } from 'lucide-react';
 import { pkr } from '../lib/engine';
 import { todayISO } from '../lib/dates';
-import { useAddPayment, useComputedEnrollments, type ComputedEnrollment } from '../lib/hooks';
-import type { Method, PaymentType } from '../lib/types';
+import {
+  useAddPayment,
+  useComputedEnrollments,
+  useRecentPayments,
+  useSettings,
+  type ComputedEnrollment,
+} from '../lib/hooks';
+import type { Method, PaymentRow, PaymentType } from '../lib/types';
 import { Button, Card, Field, FlagBadge, Input, Select, Spinner } from '../components/ui';
+import { PaymentListItem } from '../components/PaymentListItem';
+import { Receipt } from '../components/Receipt';
 
 export default function LogPayment() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const preselectId = params.get('enrollment');
+  const preType = params.get('type');
+  const preAmount = params.get('amount');
 
   const { data: enrollments, isLoading } = useComputedEnrollments();
+  const settingsQ = useSettings();
+  const recentQ = useRecentPayments(12);
   const addPayment = useAddPayment();
+
+  const academyName =
+    (settingsQ.data ?? []).find((s) => s.key === 'academy_name')?.value || 'Academy';
 
   const [selectedId, setSelectedId] = useState<number | null>(
     preselectId ? Number(preselectId) : null,
   );
   const [search, setSearch] = useState('');
-  const [type, setType] = useState<PaymentType>('Monthly');
+  const [type, setType] = useState<PaymentType>(preType === 'Admission' ? 'Admission' : 'Monthly');
   const [method, setMethod] = useState<Method>('Cash');
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState(preAmount ?? '');
   const [date, setDate] = useState(todayISO());
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
+  const [receipt, setReceipt] = useState<{
+    payment: PaymentRow;
+    studentName: string;
+    courseName: string;
+    enrollmentId: number;
+  } | null>(null);
 
   const selected = enrollments.find((e) => e.id === selectedId) ?? null;
+
+  // Student name lookup for the recent-payments list (which spans students).
+  const nameById = useMemo(
+    () => new Map(enrollments.map((e) => [e.id, e.student_name])),
+    [enrollments],
+  );
 
   const matches = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -57,7 +83,7 @@ export default function LogPayment() {
       return;
     }
     try {
-      await addPayment.mutateAsync({
+      const created = await addPayment.mutateAsync({
         enrollment_id: selected.id,
         date,
         type,
@@ -65,23 +91,37 @@ export default function LogPayment() {
         amount: amt,
         note: note.trim() || null,
       });
-      setDone(true);
-      // brief confirmation, then back to the student
-      setTimeout(() => navigate(`/students/${selected.id}`), 700);
+      setReceipt({
+        payment: created,
+        studentName: selected.student_name,
+        courseName: selected.course_name ?? '',
+        enrollmentId: selected.id,
+      });
     } catch (err) {
       setError((err as Error).message);
     }
   }
 
-  if (done) {
+  // Receipt screen (after a successful save). Remaining balance is read live so
+  // it reflects the just-recorded payment once totals refetch.
+  if (receipt) {
+    const live = enrollments.find((e) => e.id === receipt.enrollmentId);
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
-          <Check className="w-8 h-8 text-emerald-600" />
-        </div>
-        <p className="font-bold text-navy text-lg">Payment recorded</p>
-        <p className="text-sm text-slate-500 mt-1">Balance updated automatically.</p>
-      </div>
+      <Receipt
+        data={{
+          academyName,
+          studentName: receipt.studentName,
+          courseName: receipt.courseName,
+          payment: receipt.payment,
+          remainingBalance: live?.computed.balance,
+        }}
+        onAnother={() => {
+          setReceipt(null);
+          setAmount('');
+          setNote('');
+        }}
+        onDone={() => navigate(`/students/${receipt.enrollmentId}`)}
+      />
     );
   }
 
@@ -190,6 +230,36 @@ export default function LogPayment() {
           </Button>
         </form>
       </Card>
+
+      {/* Recent payments — edit or delete to fix a mistake */}
+      <section>
+        <div className="flex items-center justify-between mb-2 px-1">
+          <h2 className="text-sm font-bold text-navy uppercase tracking-wide inline-flex items-center gap-2">
+            <History className="w-4 h-4 text-slate-400" />
+            Recent payments
+          </h2>
+          <span className="text-xs text-slate-500">tap to edit or delete</span>
+        </div>
+        {recentQ.isLoading ? (
+          <Card>
+            <Spinner />
+          </Card>
+        ) : (recentQ.data ?? []).length === 0 ? (
+          <Card>
+            <p className="text-sm text-slate-500 px-4 py-6 text-center">No payments yet.</p>
+          </Card>
+        ) : (
+          <Card className="divide-y divide-slate-100 overflow-hidden">
+            {(recentQ.data ?? []).map((p) => (
+              <PaymentListItem
+                key={p.id}
+                payment={p}
+                subtitle={nameById.get(p.enrollment_id) ?? undefined}
+              />
+            ))}
+          </Card>
+        )}
+      </section>
     </div>
   );
 }

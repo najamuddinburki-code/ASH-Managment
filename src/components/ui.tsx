@@ -69,7 +69,7 @@ export function StatCard({
         <span className="text-xs font-medium uppercase tracking-wide opacity-80">{label}</span>
         {icon && <span className="opacity-80">{icon}</span>}
       </div>
-      <div className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight">
+      <div className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight break-words tabular-nums">
         {value}
       </div>
     </div>
