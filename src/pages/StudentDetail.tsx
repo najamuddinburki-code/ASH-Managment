@@ -135,7 +135,13 @@ export default function StudentDetail() {
           <Detail label="Next due" value={c.next_due ? formatDate(toISO(c.next_due)) : '—'} />
           <Detail
             label="Days late"
-            value={c.days_overdue > 0 ? `${c.days_overdue}` : '—'}
+            value={
+              c.flag === 'overdue'
+                ? c.days_overdue > 0
+                  ? `${c.days_overdue}`
+                  : 'Due today'
+                : '—'
+            }
           />
         </dl>
 

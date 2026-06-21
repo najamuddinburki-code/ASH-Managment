@@ -97,13 +97,15 @@ export function compute(e: Enrollment, paid: PaidTotals, today = new Date()): Co
   const first_due = new Date(join.getFullYear(), join.getMonth(), Math.min(e.due_day, dim));
   const next_due = closed ? null : addMonths(first_due, months_paid);
 
-  const days_overdue = closed || !next_due
-    ? 0
-    : Math.max(daysBetween(new Date(today), new Date(next_due)), 0);
+  // Signed days from the due date (0 = due today, negative = not due yet).
+  const overdue_by = closed || !next_due
+    ? -Infinity
+    : daysBetween(new Date(today), new Date(next_due));
+  const days_overdue = Math.max(overdue_by, 0);
 
   let flag: Flag;
   if (closed) flag = 'closed';
-  else if (days_overdue > 0 && balance > 0) flag = 'overdue';
+  else if (overdue_by >= 0 && balance > 0) flag = 'overdue'; // due date reached (inclusive) + owes
   else flag = 'up_to_date';
 
   return {
@@ -128,4 +130,4 @@ export function pkr(n: number): string {
 - **months_paid floors on whole months:** a partial payment must NOT advance the month; it shows as balance instead.
 - **closed freezes accrual:** Completed/Dropped stop the monthly charge growing — the only way to stop it.
 - **balance includes admission:** owner wants ONE number = everything owed.
-- **binary strict flag:** red needs past-due AND owes; keeps the chase list meaningful.
+- **binary flag, due-date inclusive:** red needs (due date reached) AND (owes). The due date is the join-day anniversary, so a brand-new unpaid student is due — and chased — from day one; once a month is paid, the next due date is the same day next month and the student is green until it arrives.

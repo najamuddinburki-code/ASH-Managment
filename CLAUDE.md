@@ -27,7 +27,7 @@ Keep dependencies minimal. No Redux, no heavy UI kit. Plain Tailwind components.
 3. **No fixed course duration.** A monthly fee **accrues automatically every month** from the join date, forever, until the owner sets the enrollment's status to `Completed` or `Dropped` (which freezes accrual).
 4. **Typing a fee ≠ receiving money.** Setting fees only defines what's *expected*. Balance only drops when a **payment row** exists. A brand-new student correctly shows a balance until their first payment is logged — SURFACE THIS clearly in the UI with a hint so the owner isn't confused.
 5. **Balance includes unpaid admission + unpaid accrued monthly.** One number = everything owed.
-6. **Overdue is binary AND strict:** red only when (past the due date) AND (balance > 0). Owes-but-not-yet-due = green. Closed (Completed/Dropped) = grey, never flagged.
+6. **Overdue is binary, due-date INCLUSIVE:** red when (today is on or past the due date) AND (balance > 0). The due date is the join-day anniversary, so a brand-new unpaid student is due — and red — from **day one**. Once a month is paid, the next due date is the same day next month and the student is green until it arrives. Closed (Completed/Dropped) = grey, never flagged.
 7. **Partial payments never advance the month counter** — the unpaid remainder shows as balance.
 8. **Payment method (Cash/Online)** is for reconciliation only; it never affects balances.
 9. **No refunds, no commission, no attendance, no capacity, no student logins, no roles.** Single owner only. (See "Out of scope".)
@@ -52,7 +52,8 @@ first_due        = date(join.year, join.month, min(due_day, daysInMonth(join.yea
 next_due         = addMonths(first_due, months_paid)        // clamp day to month length
 days_overdue     = status in (Completed,Dropped) ? 0 : max(today - next_due, 0)
 flag             = Completed→'closed' ; Dropped→'closed' ;
-                   (days_overdue>0 AND balance>0)→'overdue' ; else 'up_to_date'
+                   (today >= next_due AND balance>0)→'overdue' ; else 'up_to_date'
+                   // due date is INCLUSIVE — a new unpaid student is due from day one
 ```
 
 Put this in a single pure module `src/lib/engine.ts` with unit tests (`engine.test.ts`) using the values in `TEST_CASES.md`. The numbers MUST match before building UI.

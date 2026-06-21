@@ -108,6 +108,32 @@ describe('engine — TEST_CASES.md', () => {
     expect(c.flag).toBe('up_to_date');
   });
 
+  // The app anchors due_day to the join day-of-month, so first_due === join date.
+  // A brand-new unpaid student is therefore DUE FROM DAY ONE, not the day after.
+  it('new student (due-day = join day) is overdue the moment they join', () => {
+    const c = compute(
+      E({ join_date: '2026-06-19', due_day: 19, monthly_fee: 6000, admission_fee: 5000 }),
+      P(0, 0),
+      TODAY, // today === join date
+    );
+    expect(c.balance).toBe(11000);
+    expect(c.days_overdue).toBe(0); // due exactly today
+    expect(c.flag).toBe('overdue'); // due date reached + balance owed → chase from day one
+  });
+
+  it('after the first month is paid, next due is the join-day next month and student is green', () => {
+    const c = compute(
+      E({ join_date: '2026-06-19', due_day: 19, monthly_fee: 6000, admission_fee: 5000 }),
+      P(6000, 5000),
+      TODAY,
+    );
+    expect(c.balance).toBe(0);
+    expect(c.next_due!.getFullYear()).toBe(2026);
+    expect(c.next_due!.getMonth()).toBe(6); // July (0-indexed) — same day, next month
+    expect(c.next_due!.getDate()).toBe(19);
+    expect(c.flag).toBe('up_to_date'); // green until that anniversary arrives
+  });
+
   it('case 8: dropped is closed, no accrual growth, never flagged', () => {
     const c = compute(
       E({
