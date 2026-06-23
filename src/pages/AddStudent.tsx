@@ -143,7 +143,7 @@ export default function AddStudent() {
               </Button>
             </Link>
             <Button type="submit" loading={addEnrollment.isPending} className="flex-1">
-              Save student
+              Save Student
             </Button>
           </div>
         </form>

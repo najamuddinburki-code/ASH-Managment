@@ -124,7 +124,7 @@ export default function Months() {
           className="!py-2 !px-3 text-xs"
         >
           <Download className="w-4 h-4" />
-          CSV
+          Export Report
         </Button>
       </div>
 
@@ -391,7 +391,7 @@ function ExpensesSection({
               </p>
             )}
             <Button type="submit" loading={addExpense.isPending} className="w-full">
-              Save expense
+              Save Expense
             </Button>
           </form>
         </Card>

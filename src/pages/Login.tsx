@@ -80,7 +80,7 @@ export default function Login() {
           )}
 
           <Button type="submit" loading={busy} className="w-full">
-            Sign in
+            Sign In
           </Button>
         </form>
 

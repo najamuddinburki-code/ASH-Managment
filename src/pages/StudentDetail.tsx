@@ -120,19 +120,20 @@ export default function StudentDetail() {
             )}
           </div>
           <div className="text-right shrink-0">
-            <p className="font-label text-xs uppercase tracking-[0.16em] text-slate-400">Balance</p>
+            <p className="font-label text-xs uppercase tracking-[0.16em] text-slate-400">Owes</p>
             <p className={`font-display text-3xl tracking-tight leading-none mt-1 ${c.balance > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
               {pkr(c.balance)}
             </p>
+            <p className="text-xs text-slate-400 mt-1">Paid {pkr(c.total_paid)} so far</p>
           </div>
         </div>
 
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2 mt-4 pt-4 border-t border-slate-100 text-sm">
-          <Detail label="Joined" value={formatDate(e.join_date)} />
-          <Detail label="Due day" value={String(e.due_day)} />
-          <Detail label="Monthly" value={`${pkr(c.net_monthly)}/mo`} />
-          <Detail label="Total paid" value={pkr(c.total_paid)} />
-          <Detail label="Next due" value={c.next_due ? formatDate(toISO(c.next_due)) : '—'} />
+          <Detail label="Joined on" value={formatDate(e.join_date)} />
+          <Detail label="Fee due each month" value={`Day ${e.due_day}`} />
+          <Detail label="Monthly fee" value={`${pkr(c.net_monthly)}/mo`} />
+          <Detail label="Paid so far" value={pkr(c.total_paid)} />
+          <Detail label="Next payment due" value={c.next_due ? formatDate(toISO(c.next_due)) : '—'} />
           <Detail
             label="Days late"
             value={
@@ -154,7 +155,7 @@ export default function StudentDetail() {
           </Link>
           <Button variant="ghost" className="flex-1" onClick={() => setEditing((v) => !v)}>
             <Pencil className="w-4 h-4" />
-            {editing ? 'Close edit' : 'Edit'}
+            {editing ? 'Close' : 'Edit Student'}
           </Button>
         </div>
       </Card>
@@ -350,7 +351,7 @@ function EditForm({
         )}
 
         <Button type="submit" loading={saving} className="w-full">
-          Save changes
+          Save Changes
         </Button>
       </form>
 
@@ -364,7 +365,7 @@ function EditForm({
             className="w-full !text-red-600 !ring-red-200 hover:!bg-red-50"
           >
             <Trash2 className="w-4 h-4" />
-            Delete student
+            Delete Student
           </Button>
         ) : (
           <div className="rounded-xl bg-red-50 ring-1 ring-red-200 p-3">
@@ -391,7 +392,7 @@ function EditForm({
                   }
                 }}
               >
-                Delete forever
+                Yes, Delete
               </Button>
             </div>
           </div>

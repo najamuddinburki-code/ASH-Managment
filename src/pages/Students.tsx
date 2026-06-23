@@ -41,10 +41,15 @@ function RowBody({ e }: { e: ComputedEnrollment }) {
         </p>
       </div>
       <div className="text-right shrink-0">
-        <p className={`font-bold ${e.computed.flag === 'overdue' ? 'text-red-600' : 'text-navy'}`}>
+        <p className="text-[10px] uppercase tracking-wide text-slate-400 leading-none">Owes</p>
+        <p
+          className={`font-bold leading-tight ${
+            e.computed.flag === 'overdue' ? 'text-red-600' : 'text-navy'
+          }`}
+        >
           {pkr(e.computed.balance)}
         </p>
-        <p className="text-[11px] text-slate-400">Paid {pkr(e.computed.total_paid)}</p>
+        <p className="text-[11px] text-slate-400 mt-0.5">Paid {pkr(e.computed.total_paid)}</p>
       </div>
     </div>
   );
@@ -151,7 +156,7 @@ export default function Students() {
               <Link to="/students/new">
                 <Button variant="primary">
                   <UserPlus className="w-4 h-4" />
-                  Add
+                  Add Student
                 </Button>
               </Link>
             </>
@@ -293,7 +298,7 @@ export default function Students() {
         </Card>
       ) : rows.length === 0 ? (
         <Card>
-          <EmptyState title="No matches" message="Try a different search or filter." />
+          <EmptyState title="No students found" message="Try a different name, course, or filter." />
         </Card>
       ) : (
         <div className="space-y-2">

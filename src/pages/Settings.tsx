@@ -68,7 +68,7 @@ function AcademyNameSection() {
                   Saved
                 </>
               ) : (
-                'Save name'
+                'Save Name'
               )}
             </Button>
           </form>
@@ -270,7 +270,7 @@ function CourseForm({
             loading={addCourse.isPending || updateCourse.isPending}
             className="flex-1"
           >
-            {editing ? 'Save course' : 'Add course'}
+            {editing ? 'Save Course' : 'Add Course'}
           </Button>
         </div>
       </form>
