@@ -45,7 +45,7 @@ export async function fetchCourses(): Promise<CourseRow[]> {
 }
 
 export async function insertCourse(
-  c: Pick<CourseRow, 'name' | 'instructor' | 'typical_admission' | 'typical_monthly'>,
+  c: Pick<CourseRow, 'name' | 'instructor' | 'typical_admission' | 'typical_monthly' | 'image_url'>,
 ): Promise<CourseRow> {
   const { data, error } = await supabase.from('courses').insert(c).select().single();
   return must(data, error);
@@ -53,7 +53,9 @@ export async function insertCourse(
 
 export async function updateCourse(
   id: number,
-  patch: Partial<Pick<CourseRow, 'name' | 'instructor' | 'typical_admission' | 'typical_monthly' | 'active'>>,
+  patch: Partial<
+    Pick<CourseRow, 'name' | 'instructor' | 'typical_admission' | 'typical_monthly' | 'active' | 'image_url'>
+  >,
 ): Promise<CourseRow> {
   const { data, error } = await supabase.from('courses').update(patch).eq('id', id).select().single();
   return must(data, error);

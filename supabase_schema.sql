@@ -12,8 +12,11 @@ create table if not exists courses (
   typical_admission   numeric(10,2) default 0,
   typical_monthly     numeric(10,2) default 0,
   active              boolean default true,
+  image_url           text,                       -- course photo (data URL); shown as the course avatar
   created_at          timestamptz default now()
 );
+-- If you created `courses` before image_url existed, run this once:
+alter table courses add column if not exists image_url text;
 
 -- ---------- ENROLLMENTS (one row = one student in one course) ----------
 create table if not exists enrollments (

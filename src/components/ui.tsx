@@ -163,6 +163,31 @@ export function Avatar({
   );
 }
 
+// Course avatar — the uploaded course photo when set, else initials.
+export function CourseAvatar({
+  name,
+  imageUrl,
+  size = 'md',
+  className = '',
+}: {
+  name: string;
+  imageUrl?: string | null;
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+}) {
+  const dim = { sm: 'w-9 h-9', md: 'w-11 h-11', lg: 'w-16 h-16' }[size];
+  if (imageUrl) {
+    return (
+      <img
+        src={imageUrl}
+        alt={name}
+        className={`rounded-full object-cover shrink-0 ring-1 ring-slate-200 ${dim} ${className}`}
+      />
+    );
+  }
+  return <Avatar name={name} size={size} className={className} />;
+}
+
 // ---------------------------------------------------------------------
 // Flag badge (red overdue / green up_to_date / grey closed)
 // ---------------------------------------------------------------------

@@ -18,13 +18,14 @@ import { todayISO } from '../lib/dates';
 import {
   useAddPayment,
   useComputedEnrollments,
+  useCourses,
   useRecentPayments,
   useSettings,
   type ComputedEnrollment,
 } from '../lib/hooks';
 import { groupEnrollmentsByCourse } from '../lib/metrics';
 import type { Method, PaymentRow, PaymentType } from '../lib/types';
-import { Avatar, Button, Card, Field, Input, Select, Spinner } from '../components/ui';
+import { Avatar, Button, Card, CourseAvatar, Field, Input, Select, Spinner } from '../components/ui';
 
 function quickIcon(key: string): LucideIcon {
   if (key === 'monthly') return CalendarDays;
@@ -78,6 +79,8 @@ export default function LogPayment() {
   const preAmount = params.get('amount');
 
   const { data: enrollments, isLoading } = useComputedEnrollments();
+  const { data: courses } = useCourses();
+  const courseImg = new Map((courses ?? []).map((c) => [c.name, c.image_url]));
   const settingsQ = useSettings();
   const recentQ = useRecentPayments(12);
   const addPayment = useAddPayment();
@@ -280,8 +283,9 @@ export default function LogPayment() {
                         onClick={() => toggleCourse(g.course)}
                         className="w-full text-left px-4 py-2.5 hover:bg-slate-50"
                       >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0">
+                        <div className="flex items-center gap-3">
+                          <CourseAvatar name={g.course} imageUrl={courseImg.get(g.course)} size="sm" />
+                          <div className="min-w-0 flex-1">
                             <p className="font-semibold text-navy truncate">{g.course}</p>
                             <p className="text-xs text-slate-500">
                               {g.studentCount} student{g.studentCount === 1 ? '' : 's'}

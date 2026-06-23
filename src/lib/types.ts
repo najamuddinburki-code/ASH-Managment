@@ -19,6 +19,7 @@ export interface CourseRow {
   typical_admission: number;
   typical_monthly: number;
   active: boolean;
+  image_url: string | null; // course photo (data URL), shown as the course avatar
   created_at: string;
 }
 

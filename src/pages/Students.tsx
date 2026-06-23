@@ -17,6 +17,7 @@ import { todayISO } from '../lib/dates';
 import {
   useBulkUpdateEnrollments,
   useComputedEnrollments,
+  useCourses,
   type ComputedEnrollment,
 } from '../lib/hooks';
 import { groupEnrollmentsByCourse } from '../lib/metrics';
@@ -24,6 +25,7 @@ import {
   Avatar,
   Button,
   Card,
+  CourseAvatar,
   EmptyState,
   ErrorState,
   Field,
@@ -65,6 +67,8 @@ function quickPayHref(id: number, c: Computed): string {
 
 export default function Students() {
   const { data, isLoading, isError, error } = useComputedEnrollments();
+  const { data: courses } = useCourses();
+  const courseImg = new Map((courses ?? []).map((c) => [c.name, c.image_url]));
   const bulkUpdate = useBulkUpdateEnrollments();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterKey>('all');
@@ -401,7 +405,7 @@ export default function Students() {
                   className="w-full text-left px-4 py-3.5 hover:bg-slate-50"
                 >
                   <div className="flex items-center gap-3">
-                    <Avatar name={g.course} />
+                    <CourseAvatar name={g.course} imageUrl={courseImg.get(g.course)} />
                     <div className="min-w-0 flex-1">
                       <p className="font-bold text-navy truncate">{g.course}</p>
                       <p className="text-xs text-slate-500 mt-0.5">
