@@ -70,8 +70,8 @@ export function Receipt({
         <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mb-2">
           <Check className="w-7 h-7 text-emerald-600" />
         </div>
-        <p className="font-bold text-navy text-lg">Payment recorded</p>
-        <p className="text-sm text-slate-500">Balance updated automatically.</p>
+        <p className="font-bold text-navy text-lg">Payment saved successfully.</p>
+        <p className="text-sm text-slate-500">The balance has been updated automatically.</p>
       </div>
 
       <Card className="p-5 receipt-print">
@@ -95,7 +95,7 @@ export function Receipt({
         </div>
         {typeof data.remainingBalance === 'number' && (
           <div className="flex items-center justify-between mt-1.5">
-            <span className="text-xs text-slate-400">Remaining balance</span>
+            <span className="text-xs text-slate-400">Still owes</span>
             <span
               className={`text-sm font-bold ${
                 data.remainingBalance > 0 ? 'text-red-600' : 'text-emerald-600'
@@ -120,10 +120,10 @@ export function Receipt({
       <div className="grid grid-cols-2 gap-3 print:hidden">
         <Button variant="secondary" onClick={onAnother}>
           <Plus className="w-4 h-4" />
-          Log another
+          Record Another
         </Button>
         <Button variant="primary" onClick={onDone}>
-          View student
+          View Student
           <ArrowRight className="w-4 h-4" />
         </Button>
       </div>

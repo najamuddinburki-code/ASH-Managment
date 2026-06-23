@@ -217,7 +217,7 @@ export default function LogPayment() {
             {isLoading ? (
               <Spinner />
             ) : matches.length === 0 ? (
-              <p className="text-sm text-slate-500 px-4 py-3">No students found.</p>
+              <p className="text-sm text-slate-500 px-4 py-3">No students found yet.</p>
             ) : (
               matches.map((e) => (
                 <button
@@ -284,7 +284,7 @@ export default function LogPayment() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Type">
+                <Field label="Payment Type">
                   <Select
                     value={type}
                     onChange={(e) => {
@@ -292,11 +292,11 @@ export default function LogPayment() {
                       setActiveQuick('custom');
                     }}
                   >
-                    <option value="Monthly">Monthly</option>
-                    <option value="Admission">Admission</option>
+                    <option value="Monthly">Monthly fee</option>
+                    <option value="Admission">Admission fee</option>
                   </Select>
                 </Field>
-                <Field label="Method">
+                <Field label="Payment Method">
                   <Select value={method} onChange={(e) => setMethod(e.target.value as Method)}>
                     <option value="Cash">Cash</option>
                     <option value="Online">Online</option>
@@ -305,7 +305,7 @@ export default function LogPayment() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Amount (PKR)">
+                <Field label="Amount Received (PKR)">
                   <Input
                     ref={amountRef}
                     type="number"
@@ -342,7 +342,7 @@ export default function LogPayment() {
                 disabled={!canSave}
               >
                 <ReceiptText className="w-4 h-4" />
-                Save payment
+                Save Payment
               </Button>
             </form>
           </Card>

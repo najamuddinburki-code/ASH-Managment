@@ -39,7 +39,7 @@ export default function Home() {
       {/* Stat cards */}
       <section className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <StatCard
-          label={`Cash In · ${formatMonthLabel(monthKey)}`}
+          label={`Money In · ${formatMonthLabel(monthKey)}`}
           value={paymentsQ.isLoading ? '…' : pkr(cashInMonth)}
           icon={<Wallet className="w-5 h-5" />}
           tone="cyan"
@@ -77,9 +77,9 @@ export default function Home() {
       {/* Chase list */}
       <section>
         <div className="flex items-center justify-between mb-2 px-1">
-          <h2 className="font-label text-sm font-bold text-navy uppercase tracking-[0.16em]">Chase List</h2>
+          <h2 className="font-label text-sm font-bold text-navy uppercase tracking-[0.16em]">Who Owes You</h2>
           {chase.length > 0 && (
-            <span className="text-xs text-slate-500">{chase.length} overdue · worst first</span>
+            <span className="text-xs text-slate-500">{chase.length} overdue · biggest first</span>
           )}
         </div>
 
@@ -93,8 +93,8 @@ export default function Home() {
           <Card>
             <EmptyState
               icon={<CheckCircle2 className="w-10 h-10" />}
-              title="Nobody is overdue"
-              message="When a student passes their due date with a balance owing, they'll show up here — worst first."
+              title="No one owes you right now"
+              message="When a student's payment becomes overdue, they'll appear here — biggest amount first."
             />
           </Card>
         ) : (
@@ -113,14 +113,17 @@ export default function Home() {
                         : `${e.computed.days_overdue} day${e.computed.days_overdue === 1 ? '' : 's'} late`}
                     </p>
                   </Link>
-                  <p className="font-bold text-red-600 shrink-0">{pkr(e.computed.balance)}</p>
+                  <div className="text-right shrink-0">
+                    <p className="text-[10px] uppercase tracking-wide text-slate-400 leading-none">Owes</p>
+                    <p className="font-bold text-red-600 leading-tight">{pkr(e.computed.balance)}</p>
+                  </div>
                 </div>
                 <div className="flex items-center justify-between mt-2">
                   <FlagBadge flag="overdue" />
                   <Link to={quickPayHref(e)}>
                     <Button variant="primary" className="!py-1.5 !px-3 text-xs">
                       <ReceiptText className="w-3.5 h-3.5" />
-                      Record payment
+                      Record Payment
                     </Button>
                   </Link>
                 </div>

@@ -7,8 +7,8 @@ import { BrandMark } from './ui';
 const navItems = [
   { to: '/', label: 'Home', icon: Home, end: true },
   { to: '/students', label: 'Students', icon: Users, end: false },
-  { to: '/pay', label: 'Pay', icon: Wallet, end: false },
-  { to: '/months', label: 'Months', icon: CalendarDays, end: false },
+  { to: '/pay', label: 'Payments', icon: Wallet, end: false },
+  { to: '/months', label: 'Reports', icon: CalendarDays, end: false },
   { to: '/settings', label: 'Settings', icon: SettingsIcon, end: false },
 ];
 
@@ -44,7 +44,7 @@ export default function Layout() {
             className="shrink-0 inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-white/80 hover:text-white hover:bg-white/10 transition"
           >
             <LogOut className="w-4 h-4" />
-            Sign out
+            Sign Out
           </button>
         </div>
       </header>
