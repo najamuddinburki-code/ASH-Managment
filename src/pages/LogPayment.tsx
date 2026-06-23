@@ -34,15 +34,15 @@ function quickOptions(c: ComputedEnrollment['computed']): QuickOption[] {
     if (o.amount > 0 && !out.some((x) => x.type === o.type && x.amount === o.amount)) out.push(o);
   };
   // One month's fee — the most common daily action.
-  push({ key: 'monthly', label: 'Monthly', type: 'Monthly', amount: Math.round(c.net_monthly) });
+  push({ key: 'monthly', label: 'Monthly Fee', type: 'Monthly', amount: Math.round(c.net_monthly) });
   // Clear the admission still owed.
-  push({ key: 'admission', label: 'Admission', type: 'Admission', amount: Math.round(c.admission_owed) });
+  push({ key: 'admission', label: 'Admission Fee', type: 'Admission', amount: Math.round(c.admission_owed) });
   // One-tap "clear everything" — only when the balance is a single payment type
   // (otherwise the two buttons above clear it correctly in two taps).
   if (c.balance > 0 && (c.admission_owed === 0 || c.monthly_owed === 0)) {
     push({
       key: 'clear',
-      label: 'Clear balance',
+      label: 'Clear Balance',
       type: c.monthly_owed > 0 ? 'Monthly' : 'Admission',
       amount: Math.round(c.balance),
     });
@@ -278,7 +278,7 @@ export default function LogPayment() {
                     }`}
                   >
                     <Pencil className="w-3.5 h-3.5" />
-                    Custom
+                    Custom Amount
                   </button>
                 </div>
               </div>
