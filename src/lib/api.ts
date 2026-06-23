@@ -133,6 +133,16 @@ export async function deleteEnrollment(id: number): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+// Apply the same patch to many enrollments in one round-trip (bulk edit).
+export async function bulkUpdateEnrollments(
+  ids: number[],
+  patch: Partial<Pick<EnrollmentRow, 'join_date' | 'due_day' | 'status' | 'monthly_fee' | 'course_id' | 'course_name'>>,
+): Promise<void> {
+  if (ids.length === 0) return;
+  const { error } = await supabase.from('enrollments').update(patch).in('id', ids);
+  if (error) throw new Error(error.message);
+}
+
 // ---------------------------------------------------------------------
 // Payments
 // ---------------------------------------------------------------------
