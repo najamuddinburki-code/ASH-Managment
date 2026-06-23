@@ -22,6 +22,7 @@ import {
 import {
   useAddExpense,
   useComputedEnrollments,
+  useCourses,
   useExpensesForMonth,
   usePaymentsForMonth,
   useSettings,
@@ -37,6 +38,7 @@ import type { ExpenseCategory, ExpenseRow, Method } from '../lib/types';
 import {
   Button,
   Card,
+  CourseAvatar,
   EmptyState,
   Field,
   Input,
@@ -71,6 +73,8 @@ export default function Months() {
   const expensesQ = useExpensesForMonth(monthKey);
   const enrollmentsQ = useComputedEnrollments();
   const settingsQ = useSettings();
+  const coursesQ = useCourses();
+  const courseImg = new Map((coursesQ.data ?? []).map((c) => [c.name, c.image_url]));
 
   const payments = paymentsQ.data ?? [];
   const expenses = expensesQ.data ?? [];
@@ -216,7 +220,7 @@ export default function Months() {
             />
           </Card>
         ) : (
-          <CollectionsByCourse groups={collectionGroups} maxTotal={topCourseTotal} />
+          <CollectionsByCourse groups={collectionGroups} maxTotal={topCourseTotal} courseImg={courseImg} />
         )}
       </section>
 
@@ -235,9 +239,11 @@ export default function Months() {
 function CollectionsByCourse({
   groups,
   maxTotal,
+  courseImg,
 }: {
   groups: CollectionCourseGroup[];
   maxTotal: number;
+  courseImg: Map<string, string | null>;
 }) {
   const [openCourses, setOpenCourses] = useState<Set<string>>(new Set());
   const [openStudents, setOpenStudents] = useState<Set<number>>(new Set());
@@ -271,8 +277,9 @@ function CollectionsByCourse({
               onClick={() => toggleCourse(g.course)}
               className="w-full text-left px-4 py-3 hover:bg-slate-50"
             >
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
+              <div className="flex items-center gap-3">
+                <CourseAvatar name={g.course} imageUrl={courseImg.get(g.course)} />
+                <div className="min-w-0 flex-1">
                   <p className="font-semibold text-navy truncate">{g.course}</p>
                   <p className="text-xs text-slate-500">
                     {g.studentCount} student{g.studentCount === 1 ? '' : 's'} paid ·{' '}

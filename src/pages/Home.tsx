@@ -13,9 +13,23 @@ import {
 } from 'lucide-react';
 import { pkr } from '../lib/engine';
 import { currentMonthKey, formatMonthLabel } from '../lib/dates';
-import { useComputedEnrollments, usePaymentsForMonth, type ComputedEnrollment } from '../lib/hooks';
+import {
+  useComputedEnrollments,
+  useCourses,
+  usePaymentsForMonth,
+  type ComputedEnrollment,
+} from '../lib/hooks';
 import { chaseList, dashboardMetrics, groupEnrollmentsByCourse } from '../lib/metrics';
-import { Avatar, Button, Card, EmptyState, ErrorState, Spinner, StatCard } from '../components/ui';
+import {
+  Avatar,
+  Button,
+  Card,
+  CourseAvatar,
+  EmptyState,
+  ErrorState,
+  Spinner,
+  StatCard,
+} from '../components/ui';
 
 const PREVIEW = 4; // overdue students shown per course before "View all".
 
@@ -32,6 +46,8 @@ export default function Home() {
   const monthKey = currentMonthKey();
   const { data: enrollments, isLoading, isError, error } = useComputedEnrollments();
   const paymentsQ = usePaymentsForMonth(monthKey);
+  const { data: courses } = useCourses();
+  const courseImg = new Map((courses ?? []).map((c) => [c.name, c.image_url]));
   const [openCourses, setOpenCourses] = useState<Set<string>>(new Set());
   const [showAll, setShowAll] = useState<Set<string>>(new Set());
 
@@ -135,7 +151,7 @@ export default function Home() {
                     className="w-full text-left px-4 py-3.5 hover:bg-slate-50"
                   >
                     <div className="flex items-center gap-3">
-                      <Avatar name={g.course} />
+                      <CourseAvatar name={g.course} imageUrl={courseImg.get(g.course)} />
                       <div className="min-w-0 flex-1">
                         <p className="font-bold text-navy truncate">{g.course}</p>
                         <p className="text-xs text-slate-500 mt-0.5">
