@@ -1,3 +1,4 @@
+import { forwardRef } from 'react';
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from 'react';
 import { Loader2 } from 'lucide-react';
 
@@ -167,9 +168,11 @@ export function Field({
 const inputCls =
   'w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-navy placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-cyan focus:border-cyan transition';
 
-export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} className={`${inputCls} ${props.className ?? ''}`} />;
-}
+export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
+  function Input(props, ref) {
+    return <input ref={ref} {...props} className={`${inputCls} ${props.className ?? ''}`} />;
+  },
+);
 
 export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
   return <select {...props} className={`${inputCls} ${props.className ?? ''}`} />;
