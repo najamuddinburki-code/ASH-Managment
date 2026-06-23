@@ -1,9 +1,22 @@
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Info } from 'lucide-react';
+import { ArrowLeft, CalendarClock, Info } from 'lucide-react';
 import { todayISO } from '../lib/dates';
 import { useAddEnrollment, useCourses } from '../lib/hooks';
 import { Button, Card, Field, Input, Select } from '../components/ui';
+
+function SectionHeading({ children }: { children: ReactNode }) {
+  return (
+    <h2 className="font-label text-xs font-bold text-navy uppercase tracking-[0.16em]">{children}</h2>
+  );
+}
+
+// 5 -> "5th", 1 -> "1st" …
+function ordinal(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
 
 export default function AddStudent() {
   const navigate = useNavigate();
@@ -19,6 +32,9 @@ export default function AddStudent() {
   const [admissionFee, setAdmissionFee] = useState('0');
   const [monthlyFee, setMonthlyFee] = useState('0');
   const [error, setError] = useState<string | null>(null);
+
+  // The monthly fee falls due on the join day-of-month, every month.
+  const dueDay = Number(joinDate.slice(8, 10)) || 1;
 
   // Selecting a course pre-fills its suggested fees (owner can still override).
   function onCourseChange(value: string) {
@@ -79,56 +95,86 @@ export default function AddStudent() {
       </div>
 
       <Card className="p-4 sm:p-5">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Field label="Student name">
-            <Input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" />
-          </Field>
-
-          <Field label="Phone" hint="Optional — handy for the chase list.">
-            <Input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="03xx-xxxxxxx"
-            />
-          </Field>
-
-          <Field label="Course" hint="Picking a course pre-fills its suggested fees — you can change them.">
-            <Select value={courseId} onChange={(e) => onCourseChange(e.target.value)}>
-              <option value="">— Select a course —</option>
-              {activeCourses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </Select>
-          </Field>
-
-          <Field
-            label="Join date"
-            hint="The monthly fee falls due on this day each month (e.g. join on the 20th → due the 20th every month)."
-          >
-            <Input type="date" required value={joinDate} onChange={(e) => setJoinDate(e.target.value)} />
-          </Field>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Admission fee (PKR)">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Student information */}
+          <section className="space-y-4">
+            <SectionHeading>Student Information</SectionHeading>
+            <Field label="Student name">
+              <Input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter full name" />
+            </Field>
+            <Field label="Phone number" hint="Optional — handy for the chase list.">
               <Input
-                type="number"
-                min={0}
-                value={admissionFee}
-                onChange={(e) => setAdmissionFee(e.target.value)}
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="03XX XXXXXXX"
               />
             </Field>
-            <Field label="Monthly fee (PKR)">
-              <Input
-                type="number"
-                min={0}
-                value={monthlyFee}
-                onChange={(e) => setMonthlyFee(e.target.value)}
-              />
+          </section>
+
+          {/* Course information */}
+          <section className="space-y-4 pt-4 border-t border-slate-100">
+            <SectionHeading>Course Information</SectionHeading>
+            <Field label="Course" hint="Choosing a course can pre-fill its suggested fees — you can change them.">
+              <Select value={courseId} onChange={(e) => onCourseChange(e.target.value)}>
+                <option value="">— Select a course —</option>
+                {activeCourses.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </Select>
             </Field>
-          </div>
+          </section>
+
+          {/* Enrollment details */}
+          <section className="space-y-4 pt-4 border-t border-slate-100">
+            <SectionHeading>Enrollment Details</SectionHeading>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Join date">
+                <Input type="date" required value={joinDate} onChange={(e) => setJoinDate(e.target.value)} />
+              </Field>
+              <div>
+                <span className="block text-sm font-medium text-navy mb-1.5">Due day (auto)</span>
+                <div className="rounded-xl bg-cyan/10 ring-1 ring-cyan/30 px-3.5 py-3 flex items-center gap-2">
+                  <CalendarClock className="w-4 h-4 text-cyan-dark shrink-0" />
+                  <div className="leading-tight">
+                    <p className="font-bold text-navy">{ordinal(dueDay)}</p>
+                    <p className="text-[11px] text-slate-500">of every month</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Fee information */}
+          <section className="space-y-4 pt-4 border-t border-slate-100">
+            <SectionHeading>Fee Information</SectionHeading>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Admission fee (PKR)">
+                <Input
+                  type="number"
+                  min={0}
+                  value={admissionFee}
+                  onChange={(e) => setAdmissionFee(e.target.value)}
+                  placeholder="Enter amount"
+                />
+              </Field>
+              <Field label="Monthly fee (PKR)">
+                <Input
+                  type="number"
+                  min={0}
+                  value={monthlyFee}
+                  onChange={(e) => setMonthlyFee(e.target.value)}
+                  placeholder="Enter amount"
+                />
+              </Field>
+            </div>
+            <div className="rounded-xl bg-slate-50 ring-1 ring-slate-200 p-3 flex gap-2.5 text-sm text-slate-600">
+              <Info className="w-4 h-4 mt-0.5 shrink-0 text-slate-400" />
+              <p>Fees can be updated later from the student profile.</p>
+            </div>
+          </section>
 
           {error && (
             <p className="text-sm text-red-600 bg-red-50 ring-1 ring-red-200 rounded-lg px-3 py-2">
