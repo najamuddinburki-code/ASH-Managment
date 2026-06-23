@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { compute, type Enrollment, type PaidTotals } from './engine';
+import { compute, type Computed, type Enrollment, type PaidTotals } from './engine';
 import {
   chaseList,
   dashboardMetrics,
   earningsByCourse,
   groupCollectionsByCourse,
+  groupEnrollmentsByCourse,
   methodSplit,
   monthReport,
   sumAmounts,
@@ -201,6 +202,49 @@ describe('earnings by course', () => {
 
   it('is empty for a month with no payments', () => {
     expect(earningsByCourse([], courseOf)).toEqual([]);
+  });
+});
+
+describe('group enrollments by course (rollups)', () => {
+  type Item = { course: string; status: Enrollment['status']; computed: Computed };
+  const fullComputed = (balance: number, flag: Computed['flag']): Computed => ({
+    net_monthly: 0,
+    months_elapsed: 0,
+    months_paid: 0,
+    monthly_due: 0,
+    monthly_owed: 0,
+    admission_owed: 0,
+    balance,
+    total_paid: 0,
+    next_due: null,
+    days_overdue: 0,
+    flag,
+  });
+  const mk = (course: string, status: Item['status'], balance: number, flag: Computed['flag']): Item => ({
+    course,
+    status,
+    computed: fullComputed(balance, flag),
+  });
+
+  const items: Item[] = [
+    mk('Spoken English', 'Active', 2500, 'overdue'),
+    mk('Spoken English', 'Active', 0, 'up_to_date'),
+    mk('Spoken English', 'Completed', 0, 'closed'),
+    mk('IT', 'Active', 5000, 'overdue'),
+  ];
+
+  it('rolls up student count, owed (Active only) and overdue per course', () => {
+    const groups = groupEnrollmentsByCourse(items, (i) => i.course);
+    // IT owes more, so it sorts first.
+    expect(groups.map((g) => g.course)).toEqual(['IT', 'Spoken English']);
+    const se = groups.find((g) => g.course === 'Spoken English')!;
+    expect(se.studentCount).toBe(3);
+    expect(se.overdueCount).toBe(1);
+    expect(se.totalOwed).toBe(2500); // completed student's balance excluded
+  });
+
+  it('is empty for no enrollments', () => {
+    expect(groupEnrollmentsByCourse([] as Item[], (i) => i.course)).toEqual([]);
   });
 });
 

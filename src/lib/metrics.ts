@@ -54,6 +54,49 @@ export function earningsByCourse(
 }
 
 // ---------------------------------------------------------------------
+// Group computed enrollments by course, with per-course rollups (how many
+// students, how much is owed, how many overdue). Used by the Students page and
+// the Home "overdue by course" accordion. Students keep their input order, so
+// the caller pre-sorts; courses are sorted most-owed first.
+// ---------------------------------------------------------------------
+export interface CourseRollup<T> {
+  course: string;
+  students: T[];
+  studentCount: number;
+  totalOwed: number; // sum of balance for Active students in the course
+  overdueCount: number;
+}
+
+export function groupEnrollmentsByCourse<T extends EnrollmentLike>(
+  items: T[],
+  courseOf: (item: T) => string,
+): CourseRollup<T>[] {
+  const map = new Map<string, T[]>();
+  for (const it of items) {
+    const course = courseOf(it) || 'No course';
+    const arr = map.get(course);
+    if (arr) arr.push(it);
+    else map.set(course, [it]);
+  }
+  const out: CourseRollup<T>[] = [];
+  for (const [course, students] of map) {
+    const totalOwed = students.reduce(
+      (s, e) => s + (e.status === 'Active' ? e.computed.balance : 0),
+      0,
+    );
+    const overdueCount = students.filter((e) => e.computed.flag === 'overdue').length;
+    out.push({ course, students, studentCount: students.length, totalOwed, overdueCount });
+  }
+  out.sort(
+    (a, b) =>
+      b.totalOwed - a.totalOwed ||
+      b.overdueCount - a.overdueCount ||
+      a.course.localeCompare(b.course),
+  );
+  return out;
+}
+
+// ---------------------------------------------------------------------
 // Collections grouped Course -> Student -> individual payments. Lets the month
 // page show one student once (with their admission + monthly folded together)
 // instead of a separate flat row per payment. `info` resolves an enrollment id
