@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import {
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -25,7 +26,11 @@ import {
   usePaymentsForMonth,
   useSettings,
 } from '../lib/hooks';
-import { earningsByCourse, monthReport } from '../lib/metrics';
+import {
+  groupCollectionsByCourse,
+  monthReport,
+  type CollectionCourseGroup,
+} from '../lib/metrics';
 import { buildMonthCsv, downloadCsv } from '../lib/csv';
 import { ExpenseListItem } from '../components/ExpenseListItem';
 import type { ExpenseCategory, ExpenseRow, Method } from '../lib/types';
@@ -72,10 +77,14 @@ export default function Months() {
 
   const { collected, spent, profit, cash, online } = monthReport(payments, expenses);
 
-  // Money collected this month, grouped by course ("how much is X making").
-  const courseById = new Map(enrollmentsQ.data.map((e) => [e.id, e.course_name || 'No course']));
-  const courseEarnings = earningsByCourse(payments, (id) => courseById.get(id) ?? '');
-  const topEarning = courseEarnings.length ? courseEarnings[0].amount : 0;
+  // Collections grouped Course -> Student -> payments, so one student appears
+  // once (admission + monthly folded together) instead of a row per payment.
+  const enrollmentById = new Map(enrollmentsQ.data.map((e) => [e.id, e]));
+  const collectionGroups = groupCollectionsByCourse(payments, (id) => {
+    const e = enrollmentById.get(id);
+    return { studentName: e?.student_name ?? 'Unknown', courseName: e?.course_name ?? '' };
+  });
+  const topCourseTotal = collectionGroups.length ? collectionGroups[0].total : 0;
 
   const isThisMonth = monthKey === currentMonthKey();
   const academyName =
@@ -189,77 +198,25 @@ export default function Months() {
         </div>
       </Card>
 
-      {/* Earnings by course */}
+      {/* Collections grouped Course -> Student -> payments */}
       <section>
         <h2 className="font-label text-sm font-bold text-navy uppercase tracking-[0.16em] mb-2 px-1">
-          Earnings by Course ({courseEarnings.length})
+          Collections by Course ({collectionGroups.length})
         </h2>
         {paymentsQ.isLoading ? (
           <Card>
             <Spinner />
           </Card>
-        ) : courseEarnings.length === 0 ? (
-          <Card>
-            <EmptyState
-              icon={<TrendingUp className="w-9 h-9" />}
-              title="No earnings this month"
-              message="Money collected this month, split by course, shows here."
-            />
-          </Card>
-        ) : (
-          <Card className="p-4 space-y-3">
-            {courseEarnings.map((c) => (
-              <div key={c.course}>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <span className="font-semibold text-navy truncate">{c.course}</span>
-                  <span className="font-bold text-emerald-600 shrink-0">{pkr(c.amount)}</span>
-                </div>
-                <div className="mt-1.5 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-cyan"
-                    style={{ width: `${topEarning > 0 ? (c.amount / topEarning) * 100 : 0}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </Card>
-        )}
-      </section>
-
-      {/* Collections list */}
-      <section>
-        <h2 className="font-label text-sm font-bold text-navy uppercase tracking-[0.16em] mb-2 px-1">
-          Collections ({payments.length})
-        </h2>
-        {paymentsQ.isLoading ? (
-          <Card>
-            <Spinner />
-          </Card>
-        ) : payments.length === 0 ? (
+        ) : collectionGroups.length === 0 ? (
           <Card>
             <EmptyState
               icon={<ReceiptText className="w-9 h-9" />}
               title="No payments this month"
-              message="Payments logged in this month appear here."
+              message="Payments logged in this month appear here, grouped by course."
             />
           </Card>
         ) : (
-          <Card className="divide-y divide-slate-100 overflow-hidden">
-            {payments.map((p) => (
-              <div key={p.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                <div className="min-w-0">
-                  <p className="font-semibold text-navy">
-                    {p.type} · <span className="font-normal text-slate-500">{p.method}</span>
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    {formatDate(p.date)}
-                    {p.receipt_code ? ` · ${p.receipt_code}` : ''}
-                  </p>
-                </div>
-                <p className="font-bold text-emerald-600 shrink-0">{pkr(Number(p.amount))}</p>
-              </div>
-            ))}
-          </Card>
+          <CollectionsByCourse groups={collectionGroups} maxTotal={topCourseTotal} />
         )}
       </section>
 
@@ -269,6 +226,123 @@ export default function Months() {
         expenses={expenses}
         loading={expensesQ.isLoading}
       />
+    </div>
+  );
+}
+
+// Course -> Student -> payment accordion. One student appears once, with their
+// admission + monthly folded under them; tap a course (then a student) to drill in.
+function CollectionsByCourse({
+  groups,
+  maxTotal,
+}: {
+  groups: CollectionCourseGroup[];
+  maxTotal: number;
+}) {
+  const [openCourses, setOpenCourses] = useState<Set<string>>(new Set());
+  const [openStudents, setOpenStudents] = useState<Set<number>>(new Set());
+
+  function toggleCourse(k: string) {
+    setOpenCourses((prev) => {
+      const next = new Set(prev);
+      if (next.has(k)) next.delete(k);
+      else next.add(k);
+      return next;
+    });
+  }
+  function toggleStudent(id: number) {
+    setOpenStudents((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  return (
+    <div className="space-y-2">
+      {groups.map((g) => {
+        const courseOpen = openCourses.has(g.course);
+        return (
+          <Card key={g.course} className="overflow-hidden">
+            {/* Course header */}
+            <button
+              type="button"
+              onClick={() => toggleCourse(g.course)}
+              className="w-full text-left px-4 py-3 hover:bg-slate-50"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-semibold text-navy truncate">{g.course}</p>
+                  <p className="text-xs text-slate-500">
+                    {g.studentCount} student{g.studentCount === 1 ? '' : 's'} paid ·{' '}
+                    <span className="font-semibold text-emerald-600">{pkr(g.total)} collected</span>
+                  </p>
+                </div>
+                <ChevronDown
+                  className={`w-5 h-5 text-slate-400 shrink-0 transition ${courseOpen ? 'rotate-180' : ''}`}
+                />
+              </div>
+              <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-cyan"
+                  style={{ width: `${maxTotal > 0 ? (g.total / maxTotal) * 100 : 0}%` }}
+                />
+              </div>
+            </button>
+
+            {/* Students inside the course */}
+            {courseOpen && (
+              <div className="border-t border-slate-100 divide-y divide-slate-100 bg-slate-50/40">
+                {g.students.map((s) => {
+                  const studentOpen = openStudents.has(s.enrollmentId);
+                  return (
+                    <div key={s.enrollmentId}>
+                      <button
+                        type="button"
+                        onClick={() => toggleStudent(s.enrollmentId)}
+                        className="w-full text-left px-4 py-2.5 hover:bg-white"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0 flex items-center gap-2">
+                            <ChevronDown
+                              className={`w-4 h-4 text-slate-400 shrink-0 transition ${studentOpen ? 'rotate-180' : ''}`}
+                            />
+                            <p className="font-medium text-navy truncate">{s.studentName}</p>
+                          </div>
+                          <p className="text-sm font-bold text-emerald-600 shrink-0">
+                            {pkr(s.total)} paid
+                          </p>
+                        </div>
+                      </button>
+
+                      {/* Individual payment lines for the student */}
+                      {studentOpen && (
+                        <div className="px-4 pb-3 pl-10 space-y-1.5">
+                          {s.payments.map((p) => (
+                            <div key={p.id} className="flex items-center justify-between gap-3 text-sm">
+                              <div className="min-w-0">
+                                <span className="text-navy">
+                                  {p.type === 'Monthly' ? 'Monthly fee' : 'Admission fee'}
+                                </span>
+                                <span className="text-xs text-slate-400">
+                                  {' · '}
+                                  {p.method ?? '—'} · {formatDate(p.date)}
+                                </span>
+                              </div>
+                              <span className="font-semibold text-navy shrink-0">{pkr(p.amount)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+        );
+      })}
     </div>
   );
 }

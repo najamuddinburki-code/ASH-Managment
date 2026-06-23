@@ -3,7 +3,7 @@
 // and reused by the screens — no duplicated math in components.
 
 import type { Computed } from './engine';
-import type { Method, Status } from './types';
+import type { Method, PaymentType, Status } from './types';
 
 // The minimum shape the metrics need from a computed enrollment.
 export interface EnrollmentLike {
@@ -51,6 +51,86 @@ export function earningsByCourse(
   return [...totals.entries()]
     .map(([course, amount]) => ({ course, amount }))
     .sort((a, b) => b.amount - a.amount || a.course.localeCompare(b.course));
+}
+
+// ---------------------------------------------------------------------
+// Collections grouped Course -> Student -> individual payments. Lets the month
+// page show one student once (with their admission + monthly folded together)
+// instead of a separate flat row per payment. `info` resolves an enrollment id
+// to its student + course labels. Everything is sorted biggest-first.
+// ---------------------------------------------------------------------
+export interface CollectionPaymentLine {
+  id: number;
+  type: PaymentType;
+  method: Method | null;
+  date: string;
+  amount: number;
+}
+export interface CollectionStudentGroup {
+  enrollmentId: number;
+  studentName: string;
+  total: number;
+  payments: CollectionPaymentLine[];
+}
+export interface CollectionCourseGroup {
+  course: string;
+  total: number;
+  studentCount: number;
+  students: CollectionStudentGroup[];
+}
+
+type CollectionPaymentRow = {
+  id: number;
+  enrollment_id: number;
+  type: PaymentType;
+  method: Method | null;
+  date: string;
+  amount: number;
+};
+
+export function groupCollectionsByCourse(
+  payments: CollectionPaymentRow[],
+  info: (enrollmentId: number) => { studentName: string; courseName: string },
+): CollectionCourseGroup[] {
+  const courses = new Map<string, Map<number, CollectionStudentGroup>>();
+  for (const p of payments) {
+    const meta = info(p.enrollment_id);
+    const course = meta.courseName || 'No course';
+    let students = courses.get(course);
+    if (!students) {
+      students = new Map();
+      courses.set(course, students);
+    }
+    let sg = students.get(p.enrollment_id);
+    if (!sg) {
+      sg = {
+        enrollmentId: p.enrollment_id,
+        studentName: meta.studentName || 'Unknown',
+        total: 0,
+        payments: [],
+      };
+      students.set(p.enrollment_id, sg);
+    }
+    const amount = Number(p.amount);
+    sg.total += amount;
+    sg.payments.push({ id: p.id, type: p.type, method: p.method, date: p.date, amount });
+  }
+
+  const out: CollectionCourseGroup[] = [];
+  for (const [course, students] of courses) {
+    const studentGroups = [...students.values()].map((s) => ({
+      ...s,
+      // Newest payment first, then admission before monthly on the same day.
+      payments: s.payments.sort(
+        (a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.type.localeCompare(b.type)),
+      ),
+    }));
+    studentGroups.sort((a, b) => b.total - a.total || a.studentName.localeCompare(b.studentName));
+    const total = studentGroups.reduce((s, g) => s + g.total, 0);
+    out.push({ course, total, studentCount: studentGroups.length, students: studentGroups });
+  }
+  out.sort((a, b) => b.total - a.total || a.course.localeCompare(b.course));
+  return out;
 }
 
 // ---------------------------------------------------------------------

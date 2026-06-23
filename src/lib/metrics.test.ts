@@ -4,6 +4,7 @@ import {
   chaseList,
   dashboardMetrics,
   earningsByCourse,
+  groupCollectionsByCourse,
   methodSplit,
   monthReport,
   sumAmounts,
@@ -200,6 +201,48 @@ describe('earnings by course', () => {
 
   it('is empty for a month with no payments', () => {
     expect(earningsByCourse([], courseOf)).toEqual([]);
+  });
+});
+
+describe('group collections by course -> student -> payments', () => {
+  // enrollment 1 = Ishfaq (Spoken English), 2 = Ali (Spoken English), 3 = Hamza (IT)
+  const info = (id: number) =>
+    (
+      {
+        1: { studentName: 'Muhammad Ishfaq', courseName: 'Spoken English' },
+        2: { studentName: 'Ali Rehman', courseName: 'Spoken English' },
+        3: { studentName: 'Hamza Khan', courseName: 'IT' },
+      } as Record<number, { studentName: string; courseName: string }>
+    )[id] ?? { studentName: '', courseName: '' };
+
+  const payments = [
+    { id: 10, enrollment_id: 1, type: 'Admission' as const, method: 'Cash' as const, date: '2026-06-24', amount: 500 },
+    { id: 11, enrollment_id: 1, type: 'Monthly' as const, method: 'Cash' as const, date: '2026-06-24', amount: 2500 },
+    { id: 12, enrollment_id: 2, type: 'Monthly' as const, method: 'Online' as const, date: '2026-06-20', amount: 2500 },
+    { id: 13, enrollment_id: 3, type: 'Monthly' as const, method: 'Cash' as const, date: '2026-06-22', amount: 3000 },
+  ];
+
+  it('folds one student into a single group with their payments and total', () => {
+    const groups = groupCollectionsByCourse(payments, info);
+    const se = groups.find((g) => g.course === 'Spoken English')!;
+    expect(se.studentCount).toBe(2); // Ishfaq + Ali, not 3 rows
+    expect(se.total).toBe(5500);
+    const ishfaq = se.students.find((s) => s.enrollmentId === 1)!;
+    expect(ishfaq.total).toBe(3000); // 500 admission + 2500 monthly
+    expect(ishfaq.payments).toHaveLength(2);
+    // Admission sorts before Monthly on the same date.
+    expect(ishfaq.payments[0].type).toBe('Admission');
+  });
+
+  it('sorts courses and students biggest-first; course totals add up to collected', () => {
+    const groups = groupCollectionsByCourse(payments, info);
+    expect(groups.map((g) => g.course)).toEqual(['Spoken English', 'IT']);
+    expect(groups[0].students[0].studentName).toBe('Muhammad Ishfaq'); // 3000 > 2500
+    expect(groups.reduce((s, g) => s + g.total, 0)).toBe(sumAmounts(payments));
+  });
+
+  it('is empty for a month with no payments', () => {
+    expect(groupCollectionsByCourse([], info)).toEqual([]);
   });
 });
 
