@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { History, Info, Pencil, ReceiptText, Search, X } from 'lucide-react';
+import { ChevronDown, History, Info, Pencil, ReceiptText, Search, X } from 'lucide-react';
 import { pkr } from '../lib/engine';
 import { todayISO } from '../lib/dates';
 import {
@@ -10,6 +10,7 @@ import {
   useSettings,
   type ComputedEnrollment,
 } from '../lib/hooks';
+import { groupEnrollmentsByCourse } from '../lib/metrics';
 import type { Method, PaymentRow, PaymentType } from '../lib/types';
 import { Button, Card, Field, FlagBadge, Input, Select, Spinner } from '../components/ui';
 import { PaymentListItem } from '../components/PaymentListItem';
@@ -70,6 +71,7 @@ export default function LogPayment() {
     preselectId ? Number(preselectId) : null,
   );
   const [search, setSearch] = useState('');
+  const [openCourses, setOpenCourses] = useState<Set<string>>(new Set());
   const [type, setType] = useState<PaymentType>(preType === 'Admission' ? 'Admission' : 'Monthly');
   const [method, setMethod] = useState<Method>('Cash');
   const [amount, setAmount] = useState(preAmount ?? '');
@@ -109,8 +111,28 @@ export default function LogPayment() {
       .slice(0, 30);
   }, [enrollments, search]);
 
+  // When not searching, browse active students grouped by course (accordion).
+  const searching = search.trim() !== '';
+  const pickerGroups = useMemo(
+    () =>
+      groupEnrollmentsByCourse(
+        enrollments.filter((e) => e.status === 'Active'),
+        (e) => e.course_name || 'No course',
+      ),
+    [enrollments],
+  );
+
   // Everything required must be present before Save activates.
   const canSave = !!selected && Number(amount) > 0 && !!type && !!method && !!date;
+
+  function toggleCourse(course: string) {
+    setOpenCourses((prev) => {
+      const next = new Set(prev);
+      if (next.has(course)) next.delete(course);
+      else next.add(course);
+      return next;
+    });
+  }
 
   function pickStudent(id: number) {
     setSelectedId(id);
@@ -213,32 +235,58 @@ export default function LogPayment() {
               autoFocus
             />
           </div>
-          <div className="mt-2 rounded-xl ring-1 ring-slate-200 divide-y divide-slate-100 max-h-72 overflow-y-auto">
+          <div className="mt-2 max-h-80 overflow-y-auto">
             {isLoading ? (
               <Spinner />
-            ) : matches.length === 0 ? (
-              <p className="text-sm text-slate-500 px-4 py-3">No students found yet.</p>
+            ) : searching ? (
+              matches.length === 0 ? (
+                <p className="text-sm text-slate-500 px-4 py-3">No students found yet.</p>
+              ) : (
+                <div className="rounded-xl ring-1 ring-slate-200 divide-y divide-slate-100">
+                  {matches.map((e) => (
+                    <StudentPickButton key={e.id} e={e} onClick={() => pickStudent(e.id)} />
+                  ))}
+                </div>
+              )
+            ) : pickerGroups.length === 0 ? (
+              <p className="text-sm text-slate-500 px-4 py-3">No active students yet.</p>
             ) : (
-              matches.map((e) => (
-                <button
-                  type="button"
-                  key={e.id}
-                  onClick={() => pickStudent(e.id)}
-                  className="w-full flex items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-slate-50"
-                >
-                  <div className="min-w-0">
-                    <p className="font-semibold text-navy truncate">{e.student_name}</p>
-                    <p className="text-xs text-slate-500 truncate">{e.course_name || 'No course'}</p>
-                  </div>
-                  <span
-                    className={`text-sm font-semibold shrink-0 ${
-                      e.computed.flag === 'overdue' ? 'text-red-600' : 'text-slate-500'
-                    }`}
-                  >
-                    {pkr(e.computed.balance)}
-                  </span>
-                </button>
-              ))
+              <div className="space-y-2">
+                {pickerGroups.map((g) => {
+                  const open = openCourses.has(g.course);
+                  return (
+                    <div key={g.course} className="rounded-xl ring-1 ring-slate-200 overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => toggleCourse(g.course)}
+                        className="w-full text-left px-4 py-2.5 hover:bg-slate-50"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-navy truncate">{g.course}</p>
+                            <p className="text-xs text-slate-500">
+                              {g.studentCount} student{g.studentCount === 1 ? '' : 's'}
+                              {g.overdueCount > 0 && (
+                                <span className="text-red-600 font-semibold"> · {g.overdueCount} overdue</span>
+                              )}
+                            </p>
+                          </div>
+                          <ChevronDown
+                            className={`w-5 h-5 text-slate-400 shrink-0 transition ${open ? 'rotate-180' : ''}`}
+                          />
+                        </div>
+                      </button>
+                      {open && (
+                        <div className="border-t border-slate-100 divide-y divide-slate-100">
+                          {g.students.map((e) => (
+                            <StudentPickButton key={e.id} e={e} onClick={() => pickStudent(e.id)} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         </Card>
@@ -428,5 +476,29 @@ function SelectedStudent({
         </div>
       </div>
     </div>
+  );
+}
+
+// One tappable student in the picker (used by both the flat search results and
+// the per-course accordion).
+function StudentPickButton({ e, onClick }: { e: ComputedEnrollment; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-slate-50"
+    >
+      <div className="min-w-0">
+        <p className="font-semibold text-navy truncate">{e.student_name}</p>
+        <p className="text-xs text-slate-500 truncate">{e.course_name || 'No course'}</p>
+      </div>
+      <span
+        className={`text-sm font-semibold shrink-0 ${
+          e.computed.flag === 'overdue' ? 'text-red-600' : 'text-slate-500'
+        }`}
+      >
+        {e.computed.balance > 0 ? pkr(e.computed.balance) : 'Clear'}
+      </span>
+    </button>
   );
 }
