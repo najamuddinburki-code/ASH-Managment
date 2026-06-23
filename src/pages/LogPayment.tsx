@@ -1,6 +1,18 @@
 import { useMemo, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronDown, History, Info, Pencil, ReceiptText, Search, X } from 'lucide-react';
+import {
+  CalendarDays,
+  ChevronDown,
+  Coins,
+  History,
+  Info,
+  Layers,
+  Pencil,
+  ReceiptText,
+  Search,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 import { pkr } from '../lib/engine';
 import { todayISO } from '../lib/dates';
 import {
@@ -12,7 +24,14 @@ import {
 } from '../lib/hooks';
 import { groupEnrollmentsByCourse } from '../lib/metrics';
 import type { Method, PaymentRow, PaymentType } from '../lib/types';
-import { Button, Card, Field, FlagBadge, Input, Select, Spinner } from '../components/ui';
+import { Avatar, Button, Card, Field, Input, Select, Spinner } from '../components/ui';
+
+function quickIcon(key: string): LucideIcon {
+  if (key === 'monthly') return CalendarDays;
+  if (key === 'admission') return Coins;
+  if (key === 'clear') return Layers;
+  return Pencil;
+}
 import { PaymentListItem } from '../components/PaymentListItem';
 import { Receipt } from '../components/Receipt';
 
@@ -301,32 +320,43 @@ export default function LogPayment() {
               {/* Quick amounts */}
               <div>
                 <span className="block text-sm font-medium text-navy mb-1.5">Quick amount</span>
-                <div className="flex flex-wrap gap-2">
-                  {options.map((o) => (
-                    <button
-                      key={o.key}
-                      type="button"
-                      onClick={() => applyQuick(o)}
-                      className={`rounded-full px-3.5 py-2 text-sm font-semibold ring-1 transition ${
-                        activeQuick === o.key
-                          ? 'bg-navy text-white ring-navy'
-                          : 'bg-white text-navy ring-slate-200 hover:bg-slate-50'
-                      }`}
-                    >
-                      {o.label} · {pkr(o.amount)}
-                    </button>
-                  ))}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {options.map((o) => {
+                    const Icon = quickIcon(o.key);
+                    const active = activeQuick === o.key;
+                    return (
+                      <button
+                        key={o.key}
+                        type="button"
+                        onClick={() => applyQuick(o)}
+                        className={`rounded-xl ring-1 p-3 text-left transition ${
+                          active ? 'bg-navy ring-navy' : 'bg-white ring-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        <Icon className={`w-5 h-5 ${active ? 'text-cyan' : 'text-cyan-dark'}`} />
+                        <p className={`text-xs font-semibold mt-2 ${active ? 'text-white' : 'text-navy'}`}>
+                          {o.label}
+                        </p>
+                        <p className={`text-sm font-bold ${active ? 'text-white' : 'text-navy'}`}>
+                          {pkr(o.amount)}
+                        </p>
+                      </button>
+                    );
+                  })}
                   <button
                     type="button"
                     onClick={useCustom}
-                    className={`rounded-full px-3.5 py-2 text-sm font-semibold ring-1 transition inline-flex items-center gap-1.5 ${
-                      activeQuick === 'custom'
-                        ? 'bg-navy text-white ring-navy'
-                        : 'bg-white text-navy ring-slate-200 hover:bg-slate-50'
+                    className={`rounded-xl ring-1 p-3 text-left transition ${
+                      activeQuick === 'custom' ? 'bg-navy ring-navy' : 'bg-white ring-slate-200 hover:bg-slate-50'
                     }`}
                   >
-                    <Pencil className="w-3.5 h-3.5" />
-                    Custom Amount
+                    <Pencil className={`w-5 h-5 ${activeQuick === 'custom' ? 'text-cyan' : 'text-cyan-dark'}`} />
+                    <p className={`text-xs font-semibold mt-2 ${activeQuick === 'custom' ? 'text-white' : 'text-navy'}`}>
+                      Custom Amount
+                    </p>
+                    <p className={`text-sm ${activeQuick === 'custom' ? 'text-white/80' : 'text-slate-400'}`}>
+                      Enter amount
+                    </p>
                   </button>
                 </div>
               </div>
@@ -439,40 +469,46 @@ function SelectedStudent({
   enrollment: ComputedEnrollment;
   onChange: () => void;
 }) {
+  const owes = e.computed.balance > 0;
   return (
-    <div className="rounded-2xl bg-navy text-white p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-label text-[11px] uppercase tracking-[0.16em] text-white/50">
-            Selected student
-          </p>
-          <p className="font-display text-2xl tracking-tight leading-none mt-1 truncate">
-            {e.student_name}
-          </p>
-          <p className="text-sm text-white/70 truncate mt-1">{e.course_name || 'No course'}</p>
-        </div>
-        <button
-          type="button"
-          onClick={onChange}
-          className="shrink-0 inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20"
-        >
-          <X className="w-3.5 h-3.5" />
-          Change
-        </button>
-      </div>
-      <div className="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-white/10">
-        <FlagBadge flag={e.computed.flag} />
-        <div className="text-right">
-          <span className="font-label text-[11px] uppercase tracking-[0.16em] text-white/50">
-            Balance
-          </span>
-          <p
-            className={`font-display text-xl leading-none mt-0.5 ${
-              e.computed.balance > 0 ? 'text-cyan' : 'text-emerald-300'
-            }`}
+    <div>
+      <p className="font-label text-xs uppercase tracking-[0.16em] text-slate-400 mb-1.5 px-1">
+        Selected student
+      </p>
+      <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4">
+        <div className="flex items-center gap-3">
+          <Avatar name={e.student_name} tone="brand" />
+          <div className="min-w-0 flex-1">
+            <p className="font-bold text-navy text-lg truncate">{e.student_name}</p>
+            <p className="text-sm text-slate-500 truncate">{e.course_name || 'No course'}</p>
+            <span
+              className={`inline-flex items-center gap-1.5 mt-1 text-xs font-semibold ${
+                e.status === 'Active' ? 'text-emerald-600' : 'text-slate-500'
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  e.status === 'Active' ? 'bg-emerald-500' : 'bg-slate-400'
+                }`}
+              />
+              {e.status}
+            </span>
+          </div>
+          <div className="text-right shrink-0">
+            <p className="text-[11px] uppercase tracking-wide text-slate-400">Balance Owed</p>
+            <p className={`font-display text-2xl leading-none mt-0.5 ${owes ? 'text-red-600' : 'text-emerald-600'}`}>
+              {pkr(e.computed.balance)}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onChange}
+            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-200"
+            aria-label="Change student"
           >
-            {pkr(e.computed.balance)}
-          </p>
+            <X className="w-3.5 h-3.5" />
+            Change
+          </button>
         </div>
       </div>
     </div>

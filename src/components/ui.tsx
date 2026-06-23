@@ -116,6 +116,54 @@ export function BrandMark({
 }
 
 // ---------------------------------------------------------------------
+// Avatar — initials circle. `tone="brand"` = uniform cyan (students);
+// default derives a stable color from the name (nice for course circles).
+// ---------------------------------------------------------------------
+const AVATAR_TONES = [
+  'bg-cyan/15 text-cyan-dark',
+  'bg-indigo/10 text-indigo',
+  'bg-emerald-100 text-emerald-700',
+  'bg-amber-100 text-amber-700',
+  'bg-purple-100 text-purple-700',
+  'bg-rose-100 text-rose-700',
+];
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function hashTone(s: string): string {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return AVATAR_TONES[Math.abs(h) % AVATAR_TONES.length];
+}
+
+export function Avatar({
+  name,
+  size = 'md',
+  tone = 'auto',
+  className = '',
+}: {
+  name: string;
+  size?: 'sm' | 'md' | 'lg';
+  tone?: 'auto' | 'brand';
+  className?: string;
+}) {
+  const dim = { sm: 'w-9 h-9 text-xs', md: 'w-11 h-11 text-sm', lg: 'w-16 h-16 text-2xl' }[size];
+  const color = tone === 'brand' ? 'bg-cyan/15 text-cyan-dark' : hashTone(name);
+  return (
+    <span
+      className={`inline-flex items-center justify-center rounded-full font-extrabold shrink-0 ${dim} ${color} ${className}`}
+    >
+      {initials(name)}
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------
 // Flag badge (red overdue / green up_to_date / grey closed)
 // ---------------------------------------------------------------------
 export function FlagBadge({ flag }: { flag: 'overdue' | 'up_to_date' | 'closed' }) {

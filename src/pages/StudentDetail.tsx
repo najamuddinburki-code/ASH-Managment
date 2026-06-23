@@ -2,12 +2,17 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
+  CalendarClock,
+  CalendarDays,
   ChevronDown,
+  Clock,
+  Info,
   Pencil,
   Phone,
   ReceiptText,
-  Calculator,
   Trash2,
+  Wallet,
+  type LucideIcon,
 } from 'lucide-react';
 import { compute, pkr, type Computed, type Enrollment as EngineEnrollment, type Status } from '../lib/engine';
 import { formatDate } from '../lib/dates';
@@ -19,6 +24,7 @@ import {
   useUpdateEnrollment,
 } from '../lib/hooks';
 import {
+  Avatar,
   Button,
   Card,
   EmptyState,
@@ -70,6 +76,7 @@ export default function StudentDetail() {
 
   const [editing, setEditing] = useState(false);
   const [showWorking, setShowWorking] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const payments = paymentsQ.data ?? [];
   const paid = useMemo(() => {
@@ -94,70 +101,125 @@ export default function StudentDetail() {
         <Link to="/students" className="text-slate-500 hover:text-navy">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <h1 className="font-display text-2xl tracking-tight text-navy truncate">{e.student_name}</h1>
+        <h1 className="font-display text-2xl tracking-tight text-navy">Student Details</h1>
       </div>
 
       {/* Summary */}
       <Card className="p-4 sm:p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-start gap-4">
+          <Avatar name={e.student_name} size="lg" tone="brand" />
+          <div className="min-w-0 flex-1">
+            <h2 className="font-display text-2xl tracking-tight text-navy leading-tight truncate">
+              {e.student_name}
+            </h2>
+            <p className="text-sm text-slate-500 truncate">{e.course_name || 'No course'}</p>
+            <div className="flex flex-wrap items-center gap-2 mt-1.5">
               <StatusBadge status={e.status} />
               <FlagBadge flag={c.flag} />
-              {e.enroll_code && (
-                <span className="text-xs text-slate-400 font-mono">{e.enroll_code}</span>
-              )}
+              {e.enroll_code && <span className="text-xs text-slate-400">ID: {e.enroll_code}</span>}
             </div>
-            <p className="text-sm text-slate-600 mt-2">{e.course_name || 'No course'}</p>
             {e.phone && (
               <a
                 href={`tel:${e.phone}`}
-                className="inline-flex items-center gap-1.5 text-sm text-navy mt-1 hover:text-cyan-dark"
+                className="inline-flex items-center gap-1.5 text-sm text-navy mt-1.5 hover:text-cyan-dark"
               >
                 <Phone className="w-3.5 h-3.5" />
                 {e.phone}
               </a>
             )}
           </div>
-          <div className="text-right shrink-0">
-            <p className="font-label text-xs uppercase tracking-[0.16em] text-slate-400">Owes</p>
-            <p className={`font-display text-3xl tracking-tight leading-none mt-1 ${c.balance > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-              {pkr(c.balance)}
-            </p>
-            <p className="text-xs text-slate-400 mt-1">Paid {pkr(c.total_paid)} so far</p>
-          </div>
         </div>
 
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 mt-4 pt-4 border-t border-slate-100 text-sm">
-          <Detail label="Joined on" value={formatDate(e.join_date)} />
-          <Detail label="Fee due each month" value={`Day ${e.due_day}`} />
-          <Detail label="Monthly fee" value={`${pkr(c.net_monthly)}/mo`} />
-          <Detail label="Paid so far" value={pkr(c.total_paid)} />
-          <Detail label="Next payment due" value={c.next_due ? formatDate(toISO(c.next_due)) : '—'} />
-          <Detail
+        {/* Metric cards */}
+        <div className="grid grid-cols-2 gap-3 mt-4">
+          <Metric
+            icon={Wallet}
+            tint="red"
+            label="Owes"
+            value={pkr(c.balance)}
+            valueClass={c.balance > 0 ? 'text-red-600' : 'text-emerald-600'}
+          />
+          <Metric
+            icon={ReceiptText}
+            tint="emerald"
+            label="Paid so far"
+            value={pkr(c.total_paid)}
+            valueClass="text-emerald-600"
+          />
+          <Metric icon={CalendarDays} tint="cyan" label="Joined on" value={formatDate(e.join_date)} />
+          <Metric
+            icon={CalendarClock}
+            tint="indigo"
+            label="Next payment due"
+            value={c.next_due ? formatDate(toISO(c.next_due)) : '—'}
+          />
+          <Metric
+            icon={Clock}
+            tint="amber"
             label="Days late"
             value={
               c.flag === 'overdue'
                 ? c.days_overdue > 0
-                  ? `${c.days_overdue}`
+                  ? `${c.days_overdue} day${c.days_overdue === 1 ? '' : 's'}`
                   : 'Due today'
-                : '—'
+                : '0 days'
             }
+            sub={c.flag === 'overdue' ? undefined : 'On time'}
+            valueClass={c.flag === 'overdue' ? 'text-red-600' : 'text-emerald-600'}
           />
-        </dl>
+        </div>
 
-        <div className="flex gap-3 mt-4">
-          <Link to={payHref(e.id, c)} className="flex-1">
-            <Button variant="primary" className="w-full">
+        {/* Actions */}
+        <div className="grid grid-cols-3 gap-2 mt-4">
+          <Link to={payHref(e.id, c)}>
+            <Button variant="primary" className="w-full !px-2 text-sm">
               <ReceiptText className="w-4 h-4" />
               Log Payment
             </Button>
           </Link>
-          <Button variant="ghost" className="flex-1" onClick={() => setEditing((v) => !v)}>
+          <Button
+            variant="secondary"
+            className="w-full !px-2 text-sm"
+            onClick={() => setEditing((v) => !v)}
+          >
             <Pencil className="w-4 h-4" />
             {editing ? 'Close' : 'Edit Student'}
           </Button>
+          <Button
+            variant="ghost"
+            className="w-full !px-2 text-sm !text-red-600 !ring-red-200 hover:!bg-red-50"
+            onClick={() => setConfirmDelete(true)}
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete
+          </Button>
         </div>
+
+        {confirmDelete && (
+          <div className="mt-3 rounded-xl bg-red-50 ring-1 ring-red-200 p-3">
+            <p className="text-sm font-semibold text-red-700">Delete this student?</p>
+            <p className="text-xs text-red-600/80 mt-1">
+              This permanently removes the student and ALL their payment history. This cannot be
+              undone.
+            </p>
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              <Button type="button" variant="ghost" onClick={() => setConfirmDelete(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                loading={deleteEnrollment.isPending}
+                onClick={async () => {
+                  await deleteEnrollment.mutateAsync(e.id);
+                  navigate('/students');
+                }}
+              >
+                Yes, Delete
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* Edit form */}
@@ -208,13 +270,20 @@ export default function StudentDetail() {
       <section>
         <button
           onClick={() => setShowWorking((v) => !v)}
-          className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-white ring-1 ring-slate-200 text-sm font-semibold text-navy hover:bg-slate-50 transition"
+          className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-white ring-1 ring-slate-200 hover:bg-slate-50 transition"
         >
-          <span className="inline-flex items-center gap-2">
-            <Calculator className="w-4 h-4 text-slate-400" />
-            Show working (how the balance is calculated)
+          <span className="flex items-center gap-3 text-left">
+            <span className="w-9 h-9 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
+              <Info className="w-4 h-4" />
+            </span>
+            <span>
+              <span className="block text-sm font-semibold text-navy">How balance is calculated</span>
+              <span className="block text-xs text-slate-500">
+                Total fees − Total payments = Outstanding balance.
+              </span>
+            </span>
           </span>
-          <ChevronDown className={`w-4 h-4 transition ${showWorking ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-4 h-4 text-slate-400 transition ${showWorking ? 'rotate-180' : ''}`} />
         </button>
         {showWorking && (
           <Card className="mt-2 p-4">
@@ -239,11 +308,38 @@ export default function StudentDetail() {
   );
 }
 
-function Detail({ label, value }: { label: string; value: string }) {
+function Metric({
+  icon: Icon,
+  tint,
+  label,
+  value,
+  sub,
+  valueClass = 'text-navy',
+}: {
+  icon: LucideIcon;
+  tint: 'red' | 'emerald' | 'cyan' | 'indigo' | 'amber';
+  label: string;
+  value: string;
+  sub?: string;
+  valueClass?: string;
+}) {
+  const tints: Record<string, string> = {
+    red: 'bg-red-100 text-red-600',
+    emerald: 'bg-emerald-100 text-emerald-600',
+    cyan: 'bg-cyan/15 text-cyan-dark',
+    indigo: 'bg-indigo/10 text-indigo',
+    amber: 'bg-amber-100 text-amber-600',
+  };
   return (
-    <div>
-      <dt className="text-xs text-slate-400">{label}</dt>
-      <dd className="font-semibold text-navy">{value}</dd>
+    <div className="rounded-xl ring-1 ring-slate-200 p-3 flex items-center gap-3">
+      <span className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${tints[tint]}`}>
+        <Icon className="w-4 h-4" />
+      </span>
+      <div className="min-w-0">
+        <p className="text-xs text-slate-400">{label}</p>
+        <p className={`font-bold leading-tight ${valueClass}`}>{value}</p>
+        {sub && <p className="text-[11px] text-emerald-600">{sub}</p>}
+      </div>
     </div>
   );
 }

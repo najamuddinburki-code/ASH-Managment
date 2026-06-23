@@ -4,17 +4,20 @@ import {
   Wallet,
   Coins,
   AlertTriangle,
-  CalendarClock,
   UserPlus,
   ReceiptText,
   CheckCircle2,
   ChevronDown,
+  Info,
+  ChevronRight,
 } from 'lucide-react';
 import { pkr } from '../lib/engine';
 import { currentMonthKey, formatMonthLabel } from '../lib/dates';
 import { useComputedEnrollments, usePaymentsForMonth, type ComputedEnrollment } from '../lib/hooks';
 import { chaseList, dashboardMetrics, groupEnrollmentsByCourse } from '../lib/metrics';
-import { Button, Card, EmptyState, ErrorState, FlagBadge, Spinner, StatCard } from '../components/ui';
+import { Avatar, Button, Card, EmptyState, ErrorState, Spinner, StatCard } from '../components/ui';
+
+const PREVIEW = 4; // overdue students shown per course before "View all".
 
 // Quick-pay link: pre-pick the enrollment, and suggest the type + amount that
 // clears the most relevant debt (admission first if owed, else this month's).
@@ -30,15 +33,12 @@ export default function Home() {
   const { data: enrollments, isLoading, isError, error } = useComputedEnrollments();
   const paymentsQ = usePaymentsForMonth(monthKey);
   const [openCourses, setOpenCourses] = useState<Set<string>>(new Set());
+  const [showAll, setShowAll] = useState<Set<string>>(new Set());
 
   const { cashInMonth, totalOwed, overdueCount } = dashboardMetrics(
     enrollments,
     paymentsQ.data ?? [],
   );
-  // Due today = active students whose payment falls due today (overdue, 0 days late).
-  const dueToday = enrollments.filter(
-    (e) => e.computed.flag === 'overdue' && e.computed.days_overdue === 0,
-  ).length;
 
   // Overdue students grouped by course, worst-first within each course.
   const chase = chaseList(enrollments);
@@ -55,8 +55,8 @@ export default function Home() {
 
   return (
     <div className="space-y-6">
-      {/* Stat cards */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Summary cards */}
+      <section className="grid grid-cols-3 gap-3">
         <StatCard
           label={`Money In · ${formatMonthLabel(monthKey)}`}
           value={paymentsQ.isLoading ? '…' : pkr(cashInMonth)}
@@ -74,12 +74,6 @@ export default function Home() {
           value={isLoading ? '…' : String(overdueCount)}
           icon={<AlertTriangle className="w-5 h-5" />}
           tone={overdueCount > 0 ? 'red' : 'navy'}
-        />
-        <StatCard
-          label="Due Today"
-          value={isLoading ? '…' : String(dueToday)}
-          icon={<CalendarClock className="w-5 h-5" />}
-          tone={dueToday > 0 ? 'cyan' : 'navy'}
         />
       </section>
 
@@ -106,7 +100,10 @@ export default function Home() {
             Overdue by Course
           </h2>
           {chase.length > 0 && (
-            <span className="text-xs text-slate-500">{chase.length} overdue · tap to open</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-500">
+              <Info className="w-3.5 h-3.5" />
+              Sorted by worst first
+            </span>
           )}
         </div>
 
@@ -125,20 +122,23 @@ export default function Home() {
             />
           </Card>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {overdueByCourse.map((g) => {
               const open = openCourses.has(g.course);
+              const all = showAll.has(g.course);
+              const visible = all ? g.students : g.students.slice(0, PREVIEW);
               return (
                 <Card key={g.course} className="overflow-hidden">
                   <button
                     type="button"
                     onClick={() => toggleCourse(g.course)}
-                    className="w-full text-left px-4 py-3 hover:bg-slate-50"
+                    className="w-full text-left px-4 py-3.5 hover:bg-slate-50"
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-semibold text-navy truncate">{g.course}</p>
-                        <p className="text-xs text-slate-500">
+                    <div className="flex items-center gap-3">
+                      <Avatar name={g.course} />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-navy truncate">{g.course}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">
                           <span className="text-red-600 font-semibold">{g.studentCount} overdue</span>
                           {' · '}
                           <span className="font-semibold text-navy">{pkr(g.totalOwed)}</span> owed
@@ -152,37 +152,39 @@ export default function Home() {
 
                   {open && (
                     <div className="border-t border-slate-100 divide-y divide-slate-100">
-                      {g.students.map((e) => (
-                        <div key={e.id} className="px-4 py-3">
-                          <div className="flex items-center justify-between gap-3">
-                            <Link to={`/students/${e.id}`} className="min-w-0 group">
-                              <p className="font-semibold text-navy truncate group-hover:text-cyan-dark">
-                                {e.student_name}
-                              </p>
-                              <p className="text-xs text-slate-500 truncate">
-                                {e.computed.days_overdue === 0
-                                  ? 'due today'
-                                  : `${e.computed.days_overdue} day${e.computed.days_overdue === 1 ? '' : 's'} late`}
-                              </p>
-                            </Link>
-                            <div className="text-right shrink-0">
-                              <p className="text-[10px] uppercase tracking-wide text-slate-400 leading-none">
-                                Owes
-                              </p>
-                              <p className="font-bold text-red-600 leading-tight">{pkr(e.computed.balance)}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between mt-2">
-                            <FlagBadge flag="overdue" />
-                            <Link to={quickPayHref(e)}>
-                              <Button variant="primary" className="!py-1.5 !px-3 text-xs">
-                                <ReceiptText className="w-3.5 h-3.5" />
-                                Record Payment
-                              </Button>
-                            </Link>
-                          </div>
+                      {visible.map((e) => (
+                        <div key={e.id} className="flex items-center gap-3 px-4 py-3">
+                          <Avatar name={e.student_name} tone="brand" size="sm" />
+                          <Link to={`/students/${e.id}`} className="min-w-0 flex-1 group">
+                            <p className="font-semibold text-navy truncate group-hover:text-cyan-dark">
+                              {e.student_name}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {e.computed.days_overdue === 0
+                                ? 'due today'
+                                : `${e.computed.days_overdue} day${e.computed.days_overdue === 1 ? '' : 's'} late`}
+                            </p>
+                          </Link>
+                          <p className="font-bold text-red-600 shrink-0">{pkr(e.computed.balance)}</p>
+                          <Link to={quickPayHref(e)} className="shrink-0">
+                            <Button variant="primary" className="!py-1.5 !px-3 text-xs">
+                              <ReceiptText className="w-3.5 h-3.5" />
+                              Record Payment
+                            </Button>
+                          </Link>
                         </div>
                       ))}
+
+                      {g.students.length > PREVIEW && !all && (
+                        <button
+                          type="button"
+                          onClick={() => setShowAll((prev) => new Set(prev).add(g.course))}
+                          className="w-full flex items-center justify-center gap-1 px-4 py-3 text-sm font-semibold text-cyan-dark hover:bg-slate-50"
+                        >
+                          View all {g.studentCount} overdue students
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   )}
                 </Card>
