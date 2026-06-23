@@ -25,7 +25,7 @@ import {
   usePaymentsForMonth,
   useSettings,
 } from '../lib/hooks';
-import { monthReport } from '../lib/metrics';
+import { earningsByCourse, monthReport } from '../lib/metrics';
 import { buildMonthCsv, downloadCsv } from '../lib/csv';
 import { ExpenseListItem } from '../components/ExpenseListItem';
 import type { ExpenseCategory, ExpenseRow, Method } from '../lib/types';
@@ -71,6 +71,11 @@ export default function Months() {
   const expenses = expensesQ.data ?? [];
 
   const { collected, spent, profit, cash, online } = monthReport(payments, expenses);
+
+  // Money collected this month, grouped by course ("how much is X making").
+  const courseById = new Map(enrollmentsQ.data.map((e) => [e.id, e.course_name || 'No course']));
+  const courseEarnings = earningsByCourse(payments, (id) => courseById.get(id) ?? '');
+  const topEarning = courseEarnings.length ? courseEarnings[0].amount : 0;
 
   const isThisMonth = monthKey === currentMonthKey();
   const academyName =
@@ -183,6 +188,43 @@ export default function Months() {
           </div>
         </div>
       </Card>
+
+      {/* Earnings by course */}
+      <section>
+        <h2 className="font-label text-sm font-bold text-navy uppercase tracking-[0.16em] mb-2 px-1">
+          Earnings by Course ({courseEarnings.length})
+        </h2>
+        {paymentsQ.isLoading ? (
+          <Card>
+            <Spinner />
+          </Card>
+        ) : courseEarnings.length === 0 ? (
+          <Card>
+            <EmptyState
+              icon={<TrendingUp className="w-9 h-9" />}
+              title="No earnings this month"
+              message="Money collected this month, split by course, shows here."
+            />
+          </Card>
+        ) : (
+          <Card className="p-4 space-y-3">
+            {courseEarnings.map((c) => (
+              <div key={c.course}>
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="font-semibold text-navy truncate">{c.course}</span>
+                  <span className="font-bold text-emerald-600 shrink-0">{pkr(c.amount)}</span>
+                </div>
+                <div className="mt-1.5 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-cyan"
+                    style={{ width: `${topEarning > 0 ? (c.amount / topEarning) * 100 : 0}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </Card>
+        )}
+      </section>
 
       {/* Collections list */}
       <section>

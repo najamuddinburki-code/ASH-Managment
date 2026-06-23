@@ -31,6 +31,28 @@ export function methodSplit(payments: MethodRow[]): { cash: number; online: numb
   return { cash, online };
 }
 
+// Money collected grouped by the course each payment's enrollment belongs to —
+// "how much is Spoken English making". `courseOf` resolves an enrollment id to a
+// course label (callers map via their loaded enrollments). Sorted biggest-first.
+export interface CourseEarning {
+  course: string;
+  amount: number;
+}
+
+export function earningsByCourse(
+  payments: { enrollment_id: number; amount: number }[],
+  courseOf: (enrollmentId: number) => string,
+): CourseEarning[] {
+  const totals = new Map<string, number>();
+  for (const p of payments) {
+    const course = courseOf(p.enrollment_id) || 'No course';
+    totals.set(course, (totals.get(course) ?? 0) + Number(p.amount));
+  }
+  return [...totals.entries()]
+    .map(([course, amount]) => ({ course, amount }))
+    .sort((a, b) => b.amount - a.amount || a.course.localeCompare(b.course));
+}
+
 // ---------------------------------------------------------------------
 // Dashboard
 //   Cash In This Month = sum(payments this month)

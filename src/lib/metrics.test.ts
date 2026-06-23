@@ -3,6 +3,7 @@ import { compute, type Enrollment, type PaidTotals } from './engine';
 import {
   chaseList,
   dashboardMetrics,
+  earningsByCourse,
   methodSplit,
   monthReport,
   sumAmounts,
@@ -166,6 +167,39 @@ describe('month report (collections, expenses, profit, split)', () => {
   it('handles an empty month with no errors', () => {
     const r = monthReport([], []);
     expect(r).toEqual({ collected: 0, spent: 0, profit: 0, cash: 0, online: 0 });
+  });
+});
+
+describe('earnings by course', () => {
+  // enrollment 1 & 3 = Spoken English, 2 = IT; 9 = unknown enrollment.
+  const courseOf = (id: number) =>
+    ({ 1: 'Spoken English', 2: 'IT', 3: 'Spoken English' } as Record<number, string>)[id] ?? '';
+
+  it('groups collections by course, biggest first, and totals match', () => {
+    const payments = [
+      { enrollment_id: 1, amount: 6000 },
+      { enrollment_id: 3, amount: 5000 },
+      { enrollment_id: 2, amount: 8000 },
+    ];
+    const rows = earningsByCourse(payments, courseOf);
+    expect(rows).toEqual([
+      { course: 'Spoken English', amount: 11000 },
+      { course: 'IT', amount: 8000 },
+    ]);
+    expect(rows.reduce((s, r) => s + r.amount, 0)).toBe(sumAmounts(payments));
+  });
+
+  it('buckets unresolved courses under "No course" and coerces string amounts', () => {
+    const rows = earningsByCourse(
+      // @ts-expect-error — simulate numeric-as-string from the wire
+      [{ enrollment_id: 9, amount: '4000' }],
+      courseOf,
+    );
+    expect(rows).toEqual([{ course: 'No course', amount: 4000 }]);
+  });
+
+  it('is empty for a month with no payments', () => {
+    expect(earningsByCourse([], courseOf)).toEqual([]);
   });
 });
 
