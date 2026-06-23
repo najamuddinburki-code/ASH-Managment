@@ -171,6 +171,15 @@ export function useDeleteEnrollment() {
   return useMutation({ mutationFn: (id: number) => api.deleteEnrollment(id), onSuccess: invalidate });
 }
 
+export function useBulkUpdateEnrollments() {
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: (vars: { ids: number[]; patch: Parameters<typeof api.bulkUpdateEnrollments>[1] }) =>
+      api.bulkUpdateEnrollments(vars.ids, vars.patch),
+    onSuccess: invalidate,
+  });
+}
+
 export function useAddExpense() {
   const qc = useQueryClient();
   return useMutation({
